@@ -581,23 +581,25 @@
         }
         
         .btn-success {
-            background: var(--success);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: var(--white);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
         }
         
         .btn-success:hover {
-            background: #059669;
             transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
         }
         
         .btn-danger {
-            background: var(--danger);
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: var(--white);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
         }
         
         .btn-danger:hover {
-            background: #dc2626;
             transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
         }
         
         /* Header */
@@ -952,30 +954,30 @@
                                 ✏️
                             </button>
                         </div>
-                        <button onclick="signOut()" class="btn btn-danger">
-                            <span>יציאה</span>
+                        <button onclick="signOut()" class="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white px-4 py-2 rounded-lg font-bold shadow-lg transition-all flex items-center gap-2">
+                            ⬅️ <span>יציאה</span>
                         </button>
                     </div>
                 </div>
                 
                 <div class="header-buttons flex gap-2 flex-wrap">
-                    <button onclick="openCarModal()" class="btn btn-primary">
+                    <button onclick="openCarModal()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-4 py-2 rounded-lg font-bold shadow-lg transition-all flex items-center gap-2">
                         ➕ הוסף רכב חדש
                     </button>
-                    <button onclick="openDashboard()" class="btn btn-secondary">
+                    <button onclick="openDashboard()" class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-bold shadow-lg transition-all flex items-center gap-2">
                         📊 לוח בקרה
                     </button>
-                    <button onclick="openCalendarModal()" class="btn btn-secondary">
+                    <button onclick="openCalendarModal()" class="bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white px-4 py-2 rounded-lg font-bold shadow-lg transition-all flex items-center gap-2">
                         📅 יומן פגישות
                     </button>
-                    <button onclick="openSettings()" class="btn btn-secondary">
+                    <button onclick="openSettings()" class="bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white px-4 py-2 rounded-lg font-bold shadow-lg transition-all flex items-center gap-2">
                         ⚙️ מספר חלקי חילוף
                 </button>
-                <button onclick="openBackupModal()" class="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 flex items-center gap-2">
+                <button onclick="openBackupModal()" class="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-4 py-2 rounded-lg hover:from-teal-600 hover:to-teal-700 flex items-center gap-2 font-bold shadow-lg transition-all">
                     💾 גיבוי
                 </button>
-                <button onclick="exportCSV()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                    ייצא נתונים
+                <button onclick="exportCSV()" class="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2 rounded-lg hover:from-emerald-600 hover:to-emerald-700 font-bold shadow-lg transition-all flex items-center gap-2">
+                    📊 ייצא נתונים
                 </button>
             </div>
             
@@ -1238,10 +1240,10 @@
                     <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
                         <h3 class="text-xl font-bold">היסטוריית טיפולים</h3>
                         <div class="flex gap-2">
-                            <button onclick="openAppointmentModal()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 flex items-center gap-1 text-sm">
+                            <button onclick="openAppointmentModal()" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 flex items-center gap-1 text-sm font-bold shadow-lg">
                                 📅 קבע פגישה
                             </button>
-                            <button onclick="openMaintenanceModal()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                            <button onclick="openMaintenanceModal()" class="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2 rounded-lg hover:from-emerald-600 hover:to-emerald-700 font-bold shadow-lg">
                                 + הוסף טיפול
                             </button>
                         </div>
