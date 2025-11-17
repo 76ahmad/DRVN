@@ -187,9 +187,14 @@
                 <div id="paymentsContent" class="p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-xl font-bold text-gray-800">רשימת תשלומים</h2>
-                        <button onclick="refreshData()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-bold text-sm">
-                            🔄 רענן
-                        </button>
+                        <div class="flex gap-2">
+                            <button onclick="deleteOldPayments()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm">
+                                🗑️ מחק ישנים
+                            </button>
+                            <button onclick="refreshData()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-bold text-sm">
+                                🔄 רענן
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="overflow-x-auto">
@@ -274,7 +279,7 @@
         // Admin emails - Only these emails can access admin panel
         const ADMIN_EMAILS = [
             "admin@drvn.com",
-            "h-26-7@hotmail.com"  // أضف إيميلك هنا
+            "h-26-7@hotmail.com"
         ];
 
         let allUsers = [];
@@ -284,7 +289,6 @@
         // Check if user is already logged in
         auth.onAuthStateChanged(async (user) => {
             if (user && ADMIN_EMAILS.includes(user.email)) {
-                // User is logged in and is an admin
                 currentAdminUser = user;
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('adminDashboard').classList.remove('hidden');
@@ -298,7 +302,6 @@
             const password = document.getElementById('adminPassword').value;
             const errorDiv = document.getElementById('loginError');
 
-            // Check if email is in admin list
             if (!ADMIN_EMAILS.includes(email)) {
                 errorDiv.textContent = '❌ אין לך הרשאות ניהול! (ليس لديك صلاحيات إدارة)';
                 errorDiv.classList.remove('hidden');
@@ -306,9 +309,7 @@
             }
 
             try {
-                // Sign in with Firebase
                 await auth.signInWithEmailAndPassword(email, password);
-                
                 currentAdminUser = auth.currentUser;
                 
                 document.getElementById('loginScreen').classList.add('hidden');
@@ -341,7 +342,6 @@
 
         // Load Dashboard Data
         async function loadDashboardData() {
-            // Display admin email
             if (currentAdminUser) {
                 document.getElementById('adminEmailDisplay').textContent = `👤 ${currentAdminUser.email}`;
             }
@@ -356,11 +356,9 @@
         // Load Statistics
         async function loadStats() {
             try {
-                // Get all users
                 const usersSnapshot = await db.collection('users').get();
                 const totalUsers = usersSnapshot.size;
                 
-                // Count active subscriptions
                 let activeCount = 0;
                 let monthlyRevenue = 0;
                 
@@ -370,18 +368,16 @@
                         const endDate = data.subscriptionEndDate.toDate();
                         if (endDate > new Date()) {
                             activeCount++;
-                            monthlyRevenue += 200; // ₪200 per subscription
+                            monthlyRevenue += 200;
                         }
                     }
                 });
                 
-                // Get pending payments
                 const paymentsSnapshot = await db.collection('payments')
                     .where('status', '==', 'pending')
                     .get();
                 const pendingCount = paymentsSnapshot.size;
                 
-                // Update UI
                 document.getElementById('totalUsers').textContent = totalUsers;
                 document.getElementById('activeSubscriptions').textContent = activeCount;
                 document.getElementById('pendingPayments').textContent = pendingCount;
@@ -397,7 +393,7 @@
             try {
                 const snapshot = await db.collection('payments')
                     .orderBy('createdAt', 'desc')
-                    .limit(50)
+                    .limit(100)
                     .get();
                 
                 allPayments = [];
@@ -439,10 +435,20 @@
                     : '<span class="badge badge-active">🎉 פעיל</span>';
                 
                 const actions = payment.status === 'pending' || payment.status === 'confirmed'
-                    ? `<button onclick="activateSubscription('${payment.userId}', '${payment.id}')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm font-bold">
-                        ✅ אשר והפעל
-                       </button>`
-                    : '<span class="text-gray-400 text-sm">פעיל</span>';
+                    ? `<div class="flex gap-2">
+                        <button onclick="activateSubscription('${payment.userId}', '${payment.id}')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm font-bold">
+                            ✅ אשר
+                        </button>
+                        <button onclick="deletePayment('${payment.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-bold">
+                            🗑️ מחק
+                        </button>
+                       </div>`
+                    : `<div class="flex gap-2">
+                        <span class="text-gray-400 text-sm">פעיל</span>
+                        <button onclick="deletePayment('${payment.id}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">
+                            🗑️
+                        </button>
+                       </div>`;
                 
                 return `
                     <tr class="payment-row">
@@ -455,6 +461,64 @@
                     </tr>
                 `;
             }).join('');
+        }
+
+        // Delete Single Payment
+        async function deletePayment(paymentId) {
+            if (!confirm('האם אתה בטוח שברצונך למחוק תשלום זה?\n\n⚠️ פעולה זו אינה ניתנת לביטול!')) return;
+            
+            try {
+                await db.collection('payments').doc(paymentId).delete();
+                alert('✅ התשלום נמחק בהצלחה!');
+                refreshData();
+            } catch (error) {
+                console.error('Error deleting payment:', error);
+                alert('❌ שגיאה במחיקת התשלום: ' + error.message);
+            }
+        }
+
+        // Delete Old Payments (older than 60 days)
+        async function deleteOldPayments() {
+            const daysAgo = prompt('מחק תשלומים ישנים מלפני כמה ימים?\n\nהמלץ: 60 ימים', '60');
+            if (!daysAgo) return;
+            
+            const days = parseInt(daysAgo);
+            if (isNaN(days) || days <= 0) {
+                alert('❌ מספר ימים לא תקין');
+                return;
+            }
+            
+            if (!confirm(`⚠️ האם אתה בטוח?\n\nפעולה זו תמחק את כל התשלומים מלפני ${days} ימים.\n\nפעולה זו אינה ניתנת לביטול!`)) return;
+            
+            try {
+                const cutoffDate = new Date();
+                cutoffDate.setDate(cutoffDate.getDate() - days);
+                
+                const snapshot = await db.collection('payments')
+                    .where('createdAt', '<', firebase.firestore.Timestamp.fromDate(cutoffDate))
+                    .get();
+                
+                if (snapshot.empty) {
+                    alert('ℹ️ לא נמצאו תשלומים ישנים למחיקה');
+                    return;
+                }
+                
+                const batch = db.batch();
+                let count = 0;
+                
+                snapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                    count++;
+                });
+                
+                await batch.commit();
+                
+                alert(`✅ נמחקו בהצלחה ${count} תשלומים ישנים!`);
+                refreshData();
+            } catch (error) {
+                console.error('Error deleting old payments:', error);
+                alert('❌ שגיאה במחיקת תשלומים: ' + error.message);
+            }
         }
 
         // Load Users
@@ -568,20 +632,17 @@
             
             try {
                 const endDate = new Date();
-                endDate.setDate(endDate.getDate() + 30); // 30 days from now
+                endDate.setDate(endDate.getDate() + 30);
                 
-                // Check if user document exists
                 const userDoc = await db.collection('users').doc(userId).get();
                 
                 if (userDoc.exists) {
-                    // Update existing user
                     await db.collection('users').doc(userId).update({
                         subscriptionStatus: 'active',
                         subscriptionEndDate: firebase.firestore.Timestamp.fromDate(endDate),
                         lastPaymentDate: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 } else {
-                    // Create user document if it doesn't exist
                     const paymentDoc = await db.collection('payments').doc(paymentId).get();
                     const paymentData = paymentDoc.data();
                     
@@ -595,7 +656,6 @@
                     });
                 }
                 
-                // Update payment status
                 await db.collection('payments').doc(paymentId).update({
                     status: 'active',
                     activatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -667,11 +727,9 @@
 
         // Switch Tab
         function switchTab(tab) {
-            // Update tab buttons
             document.getElementById('paymentsTab').className = 'tab-button px-6 py-4 font-bold text-gray-600 hover:text-amber-600';
             document.getElementById('usersTab').className = 'tab-button px-6 py-4 font-bold text-gray-600 hover:text-amber-600';
             
-            // Update content
             document.getElementById('paymentsContent').classList.add('hidden');
             document.getElementById('usersContent').classList.add('hidden');
             
