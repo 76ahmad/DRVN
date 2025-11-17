@@ -1329,28 +1329,32 @@
                         <span id="userName" class="font-semibold">משתמש</span>
                     </div>
                 </div>
+                
+                <!-- Search Box -->
+                <div class="relative mt-4">
+                    <input type="text" id="searchBox" placeholder="🔍 חפש לפי מספר רישוי, שם הבעלים, סוג רכב..." onkeyup="searchCars()" oninput="searchCars()"
+                           class="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-amber-500 text-base" 
+                           style="font-size: 16px;">
+                    <button onclick="document.getElementById('searchBox').value=''; searchCars();" 
+                            class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        ✕
+                    </button>
+                </div>
             </div>
-            
-            <div class="relative">
-                <input type="text" id="searchBox" placeholder="🔍 חפש לפי מספר רישוי, שם הבעלים, סוג רכב..." onkeyup="searchCars()" oninput="searchCars()"
-                       class="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-amber-500 text-base" 
-                       style="font-size: 16px;">
-                <button onclick="document.getElementById('searchBox').value=''; searchCars();" 
-                        class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    ✕
+        </header>
+
+        <!-- Main Content Container -->
+        <div class="container mx-auto px-4 py-6">
+            <!-- Cars Grid -->
+            <div id="carsGrid" class="cards-grid"></div>
+        
+            <!-- Empty State -->
+            <div id="emptyState" class="text-center py-12 hidden">
+                <p class="text-gray-500 text-xl">אין רכבים במערכת</p>
+                <button onclick="openCarModal()" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                    הוסף רכב ראשון
                 </button>
             </div>
-        </div>
-
-        <!-- Cars Grid -->
-        <div id="carsGrid" class="cards-grid"></div>
-        
-        <!-- Empty State -->
-        <div id="emptyState" class="text-center py-12 hidden">
-            <p class="text-gray-500 text-xl">אין רכבים במערכת</p>
-            <button onclick="openCarModal()" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-                הוסף רכב ראשון
-            </button>
         </div>
     </div>
 
