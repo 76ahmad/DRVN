@@ -12,13 +12,23 @@
         * {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+        
+        /* Hide any floating action buttons on login page */
+        .fab-button,
+        button[class*="floating"],
+        button[class*="fixed"],
+        [onclick*="openCarModal"] {
+            display: none !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-900 via-slate-800 to-amber-900 min-h-screen flex items-center justify-center p-4">
     
     <!-- Version Indicator - للتأكد من التحديث -->
     <div style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; border-radius: 5px; font-size: 10px; z-index: 9999;">
-        v3.1-FIRESTORE-CHECK ✅
+        v3.2-HIDE-FAB 🧹
     </div>
     
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
@@ -432,6 +442,34 @@
             } else {
                 console.log('👤 No user logged in');
             }
+        });
+        
+        // Hide any floating action buttons from previous page
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('🧹 Cleaning up UI elements...');
+            
+            // Hide any FAB buttons that might be left over
+            const fabButtons = document.querySelectorAll('.fab-button, [class*="floating"], [class*="fixed"]');
+            fabButtons.forEach(btn => {
+                if (btn.style) {
+                    btn.style.display = 'none';
+                    console.log('✅ Hidden floating element:', btn.className);
+                }
+            });
+            
+            // Also hide any elements with position fixed at bottom
+            const allElements = document.querySelectorAll('*');
+            allElements.forEach(el => {
+                const style = window.getComputedStyle(el);
+                if (style.position === 'fixed' && 
+                    (style.bottom === '0px' || parseInt(style.bottom) < 100)) {
+                    // Don't hide the version indicator
+                    if (!el.textContent.includes('v3.1')) {
+                        el.style.display = 'none';
+                        console.log('✅ Hidden fixed element at bottom');
+                    }
+                }
+            });
         });
         
         console.log('🎉 All systems ready!');

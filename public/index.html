@@ -768,6 +768,142 @@
             box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
         }
         
+        /* ========== SIDEBAR MENU ========== */
+        .sidebar {
+            position: fixed;
+            right: -320px;
+            top: 0;
+            width: 320px;
+            height: 100%;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            box-shadow: -5px 0 25px rgba(0,0,0,0.3);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+            body.sidebar-open {
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
+}
+        }
+        
+        .sidebar.open {
+            right: 0;
+        }
+        
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+        
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(245, 158, 11, 0.1);
+            border-bottom: 2px solid #f59e0b;
+        }
+        
+        .sidebar-content {
+            padding: 0;
+        }
+        
+        .sidebar-user-info {
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .sidebar-subscription {
+            text-align: center;
+            padding: 15px;
+            background: rgba(34, 197, 94, 0.1);
+            border-bottom: 1px solid rgba(34, 197, 94, 0.2);
+            margin: 10px;
+            border-radius: 10px;
+        }
+        
+        .sidebar-nav {
+            padding: 10px 0;
+        }
+        
+        .sidebar-menu-item {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 16px 20px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            text-align: right;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-right: 4px solid transparent;
+        }
+        
+        .sidebar-menu-item:hover {
+            background: rgba(245, 158, 11, 0.15);
+            border-right-color: #f59e0b;
+            padding-right: 25px;
+        }
+        
+        .sidebar-icon {
+            font-size: 24px;
+            width: 30px;
+            text-align: center;
+        }
+        
+        .sidebar-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+            margin: 10px 20px;
+        }
+        
+        .sidebar-logout {
+            color: #ef4444;
+            margin-top: 10px;
+        }
+        
+        .sidebar-logout:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-right-color: #ef4444;
+        }
+        
+        .hamburger-menu {
+            font-size: 24px;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Dark mode adjustments */
+        [data-theme="dark"] .sidebar {
+            background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+        }
+        
         /* Header */
         .app-header {
             background: var(--card-bg);
@@ -1082,69 +1218,114 @@
     <!-- Main App -->
     <div id="mainApp" class="hidden min-h-screen">
         <!-- Header -->
-        <header class="app-header">
+        <!-- Sidebar Menu -->
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <h2 class="text-2xl font-bold text-white">תפריט</h2>
+            <button onclick="toggleSidebar()" class="text-white text-3xl hover:text-amber-300 transition">×</button>
+        </div>
+        
+        <div class="sidebar-content">
+            <!-- User Info -->
+            <div class="sidebar-user-info">
+                <div class="text-4xl mb-2">👤</div>
+                <div id="sidebarUserName" class="font-bold text-lg">משתמש</div>
+                <button onclick="editUserName()" class="text-sm text-amber-300 hover:text-amber-200 mt-1">
+                    ✏️ ערוך שם
+                </button>
+            </div>
+            
+            <!-- Subscription Info -->
+            <div id="sidebarDaysCounter" class="sidebar-subscription hidden">
+                <div class="text-green-400 font-bold text-lg">
+                    <span id="sidebarDaysLeft">0</span> ימים נותרו
+                </div>
+                <div class="text-sm text-gray-300">בחינם</div>
+            </div>
+            
+            <!-- Menu Items -->
+            <nav class="sidebar-nav">
+                <button onclick="openCarModal(); toggleSidebar();" class="sidebar-menu-item">
+                    <span class="sidebar-icon">➕</span>
+                    <span>הוסף רכב חדש</span>
+                </button>
+                
+                <button onclick="openDashboard(); toggleSidebar();" class="sidebar-menu-item">
+                    <span class="sidebar-icon">📊</span>
+                    <span>לוח בקרה</span>
+                </button>
+                
+                <button onclick="openCalendarModal(); toggleSidebar();" class="sidebar-menu-item">
+                    <span class="sidebar-icon">📅</span>
+                    <span>יומן פגישות</span>
+                </button>
+                
+                <button onclick="openSettings(); toggleSidebar();" class="sidebar-menu-item">
+                    <span class="sidebar-icon">⚙️</span>
+                    <span>מספר חלקי חילוף</span>
+                </button>
+                
+                <button onclick="openBackupModal(); toggleSidebar();" class="sidebar-menu-item">
+                    <span class="sidebar-icon">💾</span>
+                    <span>גיבוי</span>
+                </button>
+                
+                <button onclick="exportCSV(); toggleSidebar();" class="sidebar-menu-item">
+                    <span class="sidebar-icon">📊</span>
+                    <span>ייצא נתונים</span>
+                </button>
+                
+                <div class="sidebar-divider"></div>
+                
+                <button onclick="showAccountModal(); toggleSidebar();" class="sidebar-menu-item">
+                    <span class="sidebar-icon">💳</span>
+                    <span>החשבון שלי</span>
+                </button>
+                
+                <button onclick="toggleTheme();" class="sidebar-menu-item">
+                    <span class="sidebar-icon" id="sidebarThemeIcon">☀️</span>
+                    <span id="sidebarThemeText">מצב לילה</span>
+                </button>
+                
+                <button onclick="signOut();" class="sidebar-menu-item sidebar-logout">
+                    <span class="sidebar-icon">⬅️</span>
+                    <span>יציאה</span>
+                </button>
+            </nav>
+        </div>
+    </div>
+    
+    <!-- Sidebar Overlay -->
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <header class="app-header">
             <div class="header-accent"></div>
             <div class="container mx-auto px-4 py-4">
-                <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center justify-between">
+                    <!-- Hamburger Menu Button (Left) -->
+                    <button onclick="toggleSidebar()" class="hamburger-menu bg-amber-500 hover:bg-amber-600 text-white p-3 rounded-lg font-bold transition">
+                        ☰
+                    </button>
+                    
+                    <!-- Logo & Title (Center) -->
                     <div class="flex items-center gap-3">
                         <div>
                             <div style="font-size: 28px; font-weight: 900; color: #f59e0b; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); letter-spacing: 2px; font-family: Arial, sans-serif;">
                                 🏁 DRVN
                             </div>
                         </div>
-                        <div>
+                        <div class="hidden md:block">
                             <h1 class="text-2xl font-bold text-gray-900">מערכת ניהול מוסך</h1>
                             <p class="text-sm text-gray-600 font-medium">ניהול מקצועי ויעיל</p>
                         </div>
                     </div>
                     
-                    <div class="header-actions flex items-center gap-2">
-                        <div class="theme-toggle" onclick="toggleTheme()" title="تبديل الوضع الليلي">
-                            <div class="theme-toggle-slider">
-                                <span id="themeIcon">☀️</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Subscription Days Counter -->
-                        <div id="daysCounter" class="hidden bg-green-500 text-white px-4 py-2 rounded-lg font-bold">
-                            <span id="daysLeft">0</span> ימים
-                        </div>
-                        
-                        <button onclick="showAccountModal()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition">
-                            💳 החשבון שלי
-                        </button>
-                        <div class="user-badge">
-                            <span class="text-lg">👤</span>
-                            <span id="userName" class="font-semibold">משתמש</span>
-                            <button onclick="editUserName()" class="hover:opacity-70 transition-opacity" title="ערוך שם">
-                                ✏️
-                            </button>
-                        </div>
-                        <button onclick="signOut()" class="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white px-4 py-2 rounded-lg font-bold shadow-lg transition-all flex items-center gap-2">
-                            ⬅️ <span>יציאה</span>
-                        </button>
+                    <!-- User Info (Right) -->
+                    <div class="user-badge">
+                        <span class="text-lg">👤</span>
+                        <span id="userName" class="font-semibold">משתמש</span>
                     </div>
                 </div>
-                
-                <div class="header-buttons flex gap-2 flex-wrap">
-                    <button onclick="openCarModal()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-4 py-2 rounded-lg font-bold shadow-lg transition-all flex items-center gap-2">
-                        ➕ הוסף רכב חדש
-                    </button>
-                    <button onclick="openDashboard()" class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-bold shadow-lg transition-all flex items-center gap-2">
-                        📊 לוח בקרה
-                    </button>
-                    <button onclick="openCalendarModal()" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-lg font-bold shadow-lg transition-all flex items-center gap-2">
-                        📅 יומן פגישות
-                    </button>
-                    <button onclick="openSettings()" class="bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white px-4 py-2 rounded-lg font-bold shadow-lg transition-all flex items-center gap-2">
-                        ⚙️ מספר חלקי חילוף
-                </button>
-                <button onclick="openBackupModal()" class="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-indigo-600 hover:to-indigo-700 flex items-center gap-2 font-bold shadow-lg transition-all">
-                    💾 גיבוי
-                </button>
-                <button onclick="exportCSV()" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg hover:from-green-600 hover:to-green-700 font-bold shadow-lg transition-all flex items-center gap-2">
-                    📊 ייצא נתונים
-                </button>
             </div>
             
             <div class="relative">
@@ -1944,6 +2125,8 @@
             if (icon) {
                 icon.textContent = theme === 'dark' ? '🌙' : '☀️';
             }
+            // Update sidebar theme icon
+            updateSidebarTheme();
         }
         
         // Initialize theme on page load
@@ -2406,6 +2589,7 @@
                 }, { merge: true });
                 
                 document.getElementById('userName').textContent = name;
+                updateSidebarUserInfo(); // Update sidebar
                 alert('השם עודכן בהצלחה!');
             } catch (error) {
                 console.error('Error saving user name:', error);
@@ -5166,6 +5350,81 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// ========== SIDEBAR MENU FUNCTIONS ==========
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    if (sidebar && overlay) {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+        
+        if (sidebar.classList.contains('open')) {
+            document.body.classList.add('sidebar-open');
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+        } else {
+            document.body.classList.remove('sidebar-open');
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+        }
+    }
+}
+
+// Close sidebar when pressing Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar && sidebar.classList.contains('open')) {
+            toggleSidebar();
+        }
+    }
+});
+
+// Update sidebar user info when user name changes
+function updateSidebarUserInfo() {
+    const userName = document.getElementById('userName');
+    const sidebarUserName = document.getElementById('sidebarUserName');
+    if (userName && sidebarUserName) {
+        sidebarUserName.textContent = userName.textContent;
+    }
+}
+
+// Update subscription counter in sidebar
+function updateSidebarCounter() {
+    const daysLeft = document.getElementById('daysLeft');
+    const sidebarDaysLeft = document.getElementById('sidebarDaysLeft');
+    const sidebarDaysCounter = document.getElementById('sidebarDaysCounter');
+    
+    if (daysLeft && sidebarDaysLeft && sidebarDaysCounter) {
+        sidebarDaysLeft.textContent = daysLeft.textContent;
+        if (daysLeft.textContent !== '0') {
+            sidebarDaysCounter.classList.remove('hidden');
+        }
+    }
+}
+
+// Sync theme icon in sidebar
+function updateSidebarTheme() {
+    const themeIcon = document.getElementById('themeIcon');
+    const sidebarThemeIcon = document.getElementById('sidebarThemeIcon');
+    const sidebarThemeText = document.getElementById('sidebarThemeText');
+    
+    if (themeIcon && sidebarThemeIcon && sidebarThemeText) {
+        sidebarThemeIcon.textContent = themeIcon.textContent;
+        sidebarThemeText.textContent = themeIcon.textContent === '🌙' ? 'מצב יום' : 'מצב לילה';
+    }
+}
+
+// Call these on page load
+window.addEventListener('load', function() {
+    updateSidebarUserInfo();
+    updateSidebarCounter();
+    updateSidebarTheme();
+});
+
 // Show Account Modal
 function showAccountModal() {
     const modal = document.getElementById('accountModal');
@@ -5339,7 +5598,32 @@ function closeAccountModal() {
                 item.classList.toggle('active', i === index);
             });
         }
+        document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+        let startY = 0;
+        
+        sidebar.addEventListener('touchstart', function(e) {
+            startY = e.touches[0].pageY;
+        }, { passive: true });
+        
+        sidebar.addEventListener('touchmove', function(e) {
+            const currentY = e.touches[0].pageY;
+            const scrollTop = sidebar.scrollTop;
+            const scrollHeight = sidebar.scrollHeight;
+            const clientHeight = sidebar.clientHeight;
+            
+            const isAtTop = scrollTop <= 0 && currentY > startY;
+            const isAtBottom = scrollTop + clientHeight >= scrollHeight && currentY < startY;
+            
+            if (isAtTop || isAtBottom) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    }
+});
     </script>
+    
 
 </body>
 </html>
