@@ -2769,29 +2769,8 @@
             // Display car details
             document.getElementById('detailsPlateNumber').textContent = car.plateNumber;
             
-            // WhatsApp and Call buttons
-            const phoneButtons = car.phone ? `
-                <div class="mb-6 flex flex-wrap gap-2">
-                    <a href="tel:${car.phone}" class="flex-1 min-w-[200px] bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 text-center font-bold">
-                        📞 התקשר ל${car.ownerName || 'בעלים'}
-                    </a>
-                    <a href="https://wa.me/972${car.phone.replace(/^0/, '')}?text=${encodeURIComponent('שלום ' + (car.ownerName || '') + ', רכבך ' + car.plateNumber + ' נכנס לטיפול במוסך. נעדכן אותך בהמשך.')}" 
-                       target="_blank" 
-                       class="flex-1 min-w-[200px] bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 text-center font-bold">
-                        💬 נכנס לטיפול
-                    </a>
-                    <a href="https://wa.me/972${car.phone.replace(/^0/, '')}?text=${encodeURIComponent('שלום ' + (car.ownerName || '') + ', רכבך ' + car.plateNumber + ' מוכן ומחכה לאיסוף. ניתן לבוא לקחת את הרכב.')}" 
-                       target="_blank" 
-                       class="flex-1 min-w-[200px] bg-green-500 text-white px-4 py-3 rounded-lg hover:bg-green-600 text-center font-bold">
-                        ✅ מוכן לאיסוף
-                    </a>
-                    <a href="https://wa.me/972${car.phone.replace(/^0/, '')}?text=${encodeURIComponent('שלום ' + (car.ownerName || '') + ', רכבך ' + car.plateNumber + ' נמסר בהצלחה. תודה שבחרת בשירותינו!')}" 
-                       target="_blank" 
-                       class="flex-1 min-w-[200px] bg-purple-500 text-white px-4 py-3 rounded-lg hover:bg-purple-600 text-center font-bold">
-                        🎉 נמסר בהצלחה
-                    </a>
-                </div>
-            ` : '<div class="mb-6 p-4 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded">אין מספר טלפון - אנא הוסף מספר כדי להשתמש בתכונות התקשורת</div>';
+            // No phone action buttons - removed as per user request
+            const phoneButtons = '';
             
             document.getElementById('carDetailsContent').innerHTML = `
                 ${phoneButtons}
@@ -4304,6 +4283,14 @@
         // Change Car Status
         async function changeCarStatus(carId, newStatus) {
             try {
+                // Get car data first
+                const car = cars.find(c => c.id === carId);
+                if (!car) {
+                    alert('שגיאה: רכב לא נמצא');
+                    return;
+                }
+                
+                // Update status in database
                 await db.collection('cars').doc(carId).update({
                     carStatus: newStatus,
                     statusUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -4327,13 +4314,44 @@
                     'completed': 'הושלם'
                 };
                 
-                const car = cars.find(c => c.id === carId);
                 showNotification(`${car.plateNumber} הועבר ל: ${statusNames[newStatus]}`);
+                
+                // Send WhatsApp message based on status change
+                if (car.phone) {
+                    sendWhatsAppForStatus(car, newStatus);
+                }
                 
             } catch (error) {
                 console.error('Error changing car status:', error);
                 alert('שגיאה בעדכון הסטטוס');
             }
+        }
+        
+        // Send WhatsApp message based on status
+        function sendWhatsAppForStatus(car, status) {
+            let message = '';
+            const ownerName = car.ownerName || 'לקוח יקר';
+            const plateNumber = car.plateNumber;
+            
+            switch(status) {
+                case 'in_progress':
+                    message = `שלום ${ownerName}, רכבך ${plateNumber} נכנס לטיפול במוסך שלנו 🔧\nנעדכן אותך כשיהיה מוכן לאיסוף.`;
+                    break;
+                case 'ready':
+                    message = `שלום ${ownerName}, רכבך ${plateNumber} מוכן ומחכה לאיסוף ✅\nניתן לבוא לקחת את הרכב.`;
+                    break;
+                case 'completed':
+                    message = `שלום ${ownerName}, רכבך ${plateNumber} נמסר בהצלחה 🎉\nתודה שבחרת בשירותינו!`;
+                    break;
+                default:
+                    // No message for 'waiting' status
+                    return;
+            }
+            
+            // Open WhatsApp with pre-filled message
+            const phoneNumber = car.phone.replace(/^0/, '972');
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
         }
 
         // Show Notification
