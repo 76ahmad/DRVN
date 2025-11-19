@@ -339,6 +339,11 @@
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
+        /* إخفاء القائمة السفلية عند فتح modal */
+        .mobile-bottom-nav.hide-on-modal {
+            transform: translateY(100%);
+        }
+        
         [data-theme="dark"] .mobile-bottom-nav {
             background: linear-gradient(to top, rgba(30,41,59,0.98), rgba(30,41,59,0.95));
             border-top-color: #475569;
@@ -414,6 +419,13 @@
             color: white;
             transform: translateY(0);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* إخفاء FAB عند فتح modal */
+        .fab-button.hide-on-modal {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(100px);
         }
         
         .fab-button:active {
@@ -496,6 +508,82 @@
                 padding: 0.5rem 0.75rem;
                 white-space: nowrap;
             }
+        }
+        
+        /* ===== Calendar Simple Styles ===== */
+        #calendarGrid {
+            gap: 8px;
+        }
+        
+        #calendarGrid > div {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            position: relative;
+            padding: 8px;
+        }
+        
+        #calendarGrid > div:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        /* اليوم المختار - واضح جداً */
+        #calendarGrid > div.selected {
+            background: var(--primary) !important;
+            color: white !important;
+            border-color: var(--primary) !important;
+            border-width: 3px !important;
+        }
+        
+        #calendarGrid > div.selected * {
+            color: white !important;
+        }
+        
+        /* اليوم الحالي - حدود مميزة */
+        #calendarGrid > div.today {
+            border-color: #10b981 !important;
+            border-width: 3px !important;
+            font-weight: bold;
+        }
+        
+        /* لو اليوم المختار هو نفسه اليوم الحالي */
+        #calendarGrid > div.selected.today {
+            background: var(--primary) !important;
+            border-color: #10b981 !important;
+        }
+        
+        /* الأيام اللي فيها مواعيد */
+        #calendarGrid > div.has-appointments::after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            width: 4px;
+            height: 4px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+        
+        #calendarGrid > div.selected.has-appointments::after {
+            background: white;
+        }
+        
+        #calendarGrid > div span:first-child {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        #calendarGrid > div span:last-child {
+            font-size: 1rem;
+            font-weight: bold;
         }
         
         @media (max-width: 480px) {
@@ -1155,6 +1243,39 @@
             height: 1px;
             background: linear-gradient(90deg, transparent 0%, var(--border-color) 50%, transparent 100%);
         }
+        
+        /* Mobile Scroll Fix */
+        @media (max-width: 768px) {
+            #backupModal {
+                align-items: flex-start !important;
+                padding: 0 !important;
+            }
+            
+            #backupModal > div {
+                margin: 0 !important;
+                max-height: 100vh !important;
+                border-radius: 0 !important;
+            }
+            
+            /* Smooth scrolling */
+            #backupModal,
+            #backupModal > div {
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior: contain;
+            }
+            
+            /* Prevent body scroll when modal open */
+            body.modal-open {
+                overflow: hidden;
+                position: fixed;
+                width: 100%;
+            }
+            
+            /* Hide floating add button when modal is open */
+            body.modal-open .floating-add-btn {
+                display: none !important;
+            }
+        }
     </style>
 
 </head>
@@ -1248,39 +1369,39 @@
             
             <!-- Menu Items -->
             <nav class="sidebar-nav">
-                <button onclick="openCarModal(); toggleSidebar();" class="sidebar-menu-item">
+                <button onclick="toggleSidebar(); setTimeout(() => openCarModal(), 100);" class="sidebar-menu-item">
                     <span class="sidebar-icon">➕</span>
                     <span>הוסף רכב חדש</span>
                 </button>
                 
-                <button onclick="openDashboard(); toggleSidebar();" class="sidebar-menu-item">
+                <button onclick="toggleSidebar(); setTimeout(() => openDashboard(), 100);" class="sidebar-menu-item">
                     <span class="sidebar-icon">📊</span>
                     <span>לוח בקרה</span>
                 </button>
                 
-                <button onclick="openCalendarModal(); toggleSidebar();" class="sidebar-menu-item">
+                <button onclick="toggleSidebar(); setTimeout(() => openCalendarModal(), 100);" class="sidebar-menu-item">
                     <span class="sidebar-icon">📅</span>
                     <span>יומן פגישות</span>
                 </button>
                 
-                <button onclick="openSettings(); toggleSidebar();" class="sidebar-menu-item">
+                <button onclick="toggleSidebar(); setTimeout(() => openSettings(), 100);" class="sidebar-menu-item">
                     <span class="sidebar-icon">⚙️</span>
                     <span>מספר חלקי חילוף</span>
                 </button>
                 
-                <button onclick="openBackupModal(); toggleSidebar();" class="sidebar-menu-item">
+                <button onclick="toggleSidebar(); setTimeout(() => openBackupModal(), 100);" class="sidebar-menu-item">
                     <span class="sidebar-icon">💾</span>
                     <span>גיבוי</span>
                 </button>
                 
-                <button onclick="exportCSV(); toggleSidebar();" class="sidebar-menu-item">
+                <button onclick="toggleSidebar(); setTimeout(() => exportCSV(), 100);" class="sidebar-menu-item">
                     <span class="sidebar-icon">📊</span>
                     <span>ייצא נתונים</span>
                 </button>
                 
                 <div class="sidebar-divider"></div>
                 
-                <button onclick="showAccountModal(); toggleSidebar();" class="sidebar-menu-item">
+                <button onclick="toggleSidebar(); setTimeout(() => showAccountModal(), 100);" class="sidebar-menu-item">
                     <span class="sidebar-icon">💳</span>
                     <span>החשבון שלי</span>
                 </button>
@@ -1290,7 +1411,7 @@
                     <span id="sidebarThemeText">מצב לילה</span>
                 </button>
                 
-                <button onclick="signOut();" class="sidebar-menu-item sidebar-logout">
+                <button onclick="toggleSidebar(); setTimeout(() => signOut(), 100);" class="sidebar-menu-item sidebar-logout">
                     <span class="sidebar-icon">⬅️</span>
                     <span>יציאה</span>
                 </button>
@@ -1759,82 +1880,170 @@
 
 
     <!-- Backup Modal -->
-    <div id="backupModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full">
-            <div class="bg-teal-600 text-white p-6 rounded-t-lg">
+    <div id="backupModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto my-auto">
+            <div class="bg-teal-600 text-white p-4 md:p-6 rounded-t-lg sticky top-0 z-10">
                 <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-bold">💾 גיבוי ושחזור</h2>
+                    <h2 class="text-xl md:text-2xl font-bold">💾 גיבוי ושחזור</h2>
                     <button onclick="closeBackupModal()" class="text-white hover:text-gray-200 text-3xl leading-none">&times;</button>
                 </div>
             </div>
             
-            <div class="p-6">
-                <!-- Backup Section -->
-                <div class="mb-6">
-                    <h3 class="text-xl font-bold mb-4 text-gray-800">📤 יצירת גיבוי</h3>
-                    <p class="text-gray-600 mb-4">שמור את כל הנתונים שלך (רכבים, טיפולים, פגישות) לקובץ JSON</p>
-                    
-                    <div class="flex gap-3">
-                        <button onclick="createBackup()" class="flex-1 bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 font-bold flex items-center justify-center gap-2">
-                            <span>💾</span>
-                            <span>יצירת גיבוי מלא</span>
-                        </button>
-                        <button onclick="createBackupWithImages()" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-bold flex items-center justify-center gap-2">
-                            <span>📸</span>
-                            <span>גיבוי עם תמונות</span>
-                        </button>
+            <div class="p-3 md:p-6 pb-24 md:pb-6">
+                <!-- Quick Actions - Prominent Buttons -->
+                <div class="mb-4 space-y-3">
+                    <button onclick="createAutoBackup(true)" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-98 text-white px-6 py-4 rounded-xl font-bold flex items-center justify-center gap-3 shadow-lg transition-all text-lg">
+                        <span class="text-2xl">⚡</span>
+                        <span>גיבוי מהיר עכשיו</span>
+                    </button>
+                    <button onclick="showBackupList()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 active:scale-98 text-white px-6 py-4 rounded-xl font-bold flex items-center justify-center gap-3 shadow-lg transition-all text-lg">
+                        <span class="text-2xl">📋</span>
+                        <span>כל הגיבויים</span>
+                    </button>
+                </div>
+                
+                <!-- Auto Backup Status - Compact -->
+                <div class="mb-4 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 shadow-sm">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-2xl">🤖</span>
+                        <div class="flex-1">
+                            <div class="font-bold text-green-900">גיבוי אוטומטי</div>
+                            <div class="text-xs text-green-700">כל יום שישי, 23:00</div>
+                        </div>
+                        <div class="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                            פעיל
+                        </div>
                     </div>
                     
-                    <div id="backupProgress" class="hidden mt-4">
-                        <div class="bg-gray-200 rounded-full h-4 overflow-hidden">
-                            <div id="backupProgressBar" class="bg-teal-600 h-full transition-all duration-300" style="width: 0%"></div>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-white/70 p-2 rounded-lg">
+                            <div class="text-gray-600">גיבוי אחרון</div>
+                            <div id="lastAutoBackupTime" class="font-bold text-gray-800">...</div>
                         </div>
-                        <p id="backupProgressText" class="text-center text-sm text-gray-600 mt-2">מכין גיבוי...</p>
+                        <div class="bg-white/70 p-2 rounded-lg">
+                            <div class="text-gray-600">הבא בעוד</div>
+                            <div id="timeUntilBackup" class="font-bold text-blue-600">...</div>
+                        </div>
                     </div>
                 </div>
                 
-                <hr class="my-6">
-                
-                <!-- Restore Section -->
-                <div>
-                    <h3 class="text-xl font-bold mb-4 text-gray-800">📥 שחזור מגיבוי</h3>
-                    <p class="text-gray-600 mb-4">טען קובץ גיבוי קודם לשחזור הנתונים</p>
+                <!-- Advanced Options -->
+                <details class="mb-4">
+                    <summary class="cursor-pointer p-3 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-lg font-bold text-gray-700 flex items-center justify-between transition">
+                        <span>⚙️ אפשרויות מתקדמות</span>
+                        <span class="text-sm">▼</span>
+                    </summary>
                     
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                        <input type="file" id="restoreFile" accept=".json" class="hidden" onchange="handleRestoreFile(event)">
-                        <label for="restoreFile" class="cursor-pointer">
-                            <div class="text-4xl mb-2">📁</div>
-                            <div class="text-blue-600 font-bold mb-1">בחר קובץ גיבוי</div>
-                            <div class="text-gray-500 text-sm">או גרור קובץ JSON לכאן</div>
-                        </label>
-                    </div>
-                    
-                    <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-4 mt-4">
-                        <div class="flex items-start gap-2">
-                            <span class="text-yellow-600">⚠️</span>
-                            <div class="text-sm text-yellow-800">
-                                <strong>אזהרה:</strong> שחזור מגיבוי ימחק את כל הנתונים הנוכחיים ויחליף אותם בנתונים מהגיבוי!
+                    <div class="mt-3 space-y-3">
+                        <!-- Manual Backup -->
+                        <div class="bg-white p-3 rounded-lg border shadow-sm">
+                            <div class="font-bold mb-2 text-sm">📤 גיבוי ידני</div>
+                            <div class="space-y-2">
+                                <button onclick="createBackup()" class="w-full bg-teal-600 text-white px-4 py-3 rounded-lg hover:bg-teal-700 active:scale-98 font-bold flex items-center justify-center gap-2 transition-all">
+                                    <span>💾</span>
+                                    <span class="text-sm">גיבוי מלא</span>
+                                </button>
+                                <button onclick="createBackupWithImages()" class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 active:scale-98 font-bold flex items-center justify-center gap-2 transition-all">
+                                    <span>📸</span>
+                                    <span class="text-sm">גיבוי + תמונות</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Restore -->
+                        <div class="bg-white p-3 rounded-lg border shadow-sm">
+                            <div class="font-bold mb-2 text-sm">📥 שחזור מגיבוי</div>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 active:border-blue-500 transition">
+                                <input type="file" id="restoreFile" accept=".json" class="hidden" onchange="handleRestoreFile(event)">
+                                <label for="restoreFile" class="cursor-pointer">
+                                    <div class="text-3xl mb-1">📁</div>
+                                    <div class="text-blue-600 font-bold text-sm">בחר קובץ</div>
+                                </label>
+                            </div>
+                            <div class="bg-yellow-50 border-r-2 border-yellow-400 rounded p-2 mt-2">
+                                <div class="text-xs text-yellow-800">
+                                    ⚠️ שחזור ימחק את כל הנתונים!
+                                </div>
                             </div>
                         </div>
                     </div>
+                </details>
+                
+                <!-- Progress -->
+                <div id="backupProgress" class="hidden mb-4">
+                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-200">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="animate-spin text-xl">⚙️</div>
+                            <span class="font-bold text-gray-800 text-sm">מעבד...</span>
+                        </div>
+                        <div class="bg-gray-200 rounded-full h-2 overflow-hidden">
+                            <div id="backupProgressBar" class="bg-gradient-to-r from-blue-500 to-purple-500 h-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <p id="backupProgressText" class="text-center text-xs text-gray-600 mt-1">מכין גיבוי...</p>
+                    </div>
                 </div>
                 
-                <hr class="my-6">
-                
-                <!-- Last Backup Info -->
-                <div class="bg-gray-50 rounded-lg p-4">
+                <!-- Info -->
+                <div class="bg-gray-50 rounded-lg p-3 border text-xs">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-gray-600">גיבוי ידני אחרון</span>
+                        <span id="lastBackupDate" class="font-bold text-gray-800">-</span>
+                    </div>
                     <div class="flex items-center justify-between">
-                        <div>
-                            <div class="text-sm text-gray-600">גיבוי אחרון</div>
-                            <div id="lastBackupDate" class="font-bold text-gray-800">טרם בוצע גיבוי</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-sm text-gray-600">סה״כ נתונים</div>
-                            <div id="totalDataCount" class="font-bold text-gray-800">-</div>
-                        </div>
+                        <span class="text-gray-600">סה״כ נתונים</span>
+                        <span id="totalDataCount" class="font-bold text-gray-800">-</span>
                     </div>
                 </div>
             </div>
+            
+            <style>
+            /* Smooth details animation */
+            details summary::-webkit-details-marker {
+                display: none;
+            }
+            
+            details[open] summary span:last-child {
+                transform: rotate(180deg);
+                display: inline-block;
+            }
+            
+            details summary span:last-child {
+                transition: transform 0.2s ease;
+            }
+            
+            /* Active scale */
+            .active\:scale-98:active {
+                transform: scale(0.98);
+            }
+            </style>
+            
+            <script>
+            // Simplified update - no heavy calculations
+            function updateAutoBackupInfo() {
+                try {
+                    const lastBackupEl = document.getElementById('lastAutoBackupTime');
+                    const timeUntilEl = document.getElementById('timeUntilBackup');
+                    
+                    if (lastBackupEl) {
+                        const lastBackup = localStorage.getItem('lastAutoBackupDate');
+                        if (lastBackup) {
+                            const days = Math.floor((Date.now() - new Date(lastBackup)) / 86400000);
+                            lastBackupEl.textContent = days > 0 ? `לפני ${days} ימים` : 'היום';
+                        } else {
+                            lastBackupEl.textContent = 'טרם בוצע';
+                        }
+                    }
+                    
+                    if (timeUntilEl) {
+                        const dayOfWeek = new Date().getDay();
+                        const daysUntil = (5 - dayOfWeek + 7) % 7 || 7;
+                        timeUntilEl.textContent = daysUntil > 1 ? `${daysUntil} ימים` : daysUntil === 1 ? 'מחר' : 'היום';
+                    }
+                } catch (e) {
+                    console.error('Update error:', e);
+                }
+            }
+            </script>
         </div>
     </div>
 
@@ -1859,14 +2068,14 @@
                 </div>
                 
                 <!-- Calendar Grid -->
-                <div class="grid grid-cols-7 gap-2 mb-6">
-                    <div class="text-center font-bold p-2">א׳</div>
-                    <div class="text-center font-bold p-2">ב׳</div>
-                    <div class="text-center font-bold p-2">ג׳</div>
-                    <div class="text-center font-bold p-2">ד׳</div>
-                    <div class="text-center font-bold p-2">ה׳</div>
-                    <div class="text-center font-bold p-2">ו׳</div>
-                    <div class="text-center font-bold p-2">ש׳</div>
+                <div class="grid grid-cols-7 gap-2 mb-3 px-2">
+                    <div class="text-center font-bold p-2 text-sm">א׳</div>
+                    <div class="text-center font-bold p-2 text-sm">ב׳</div>
+                    <div class="text-center font-bold p-2 text-sm">ג׳</div>
+                    <div class="text-center font-bold p-2 text-sm">ד׳</div>
+                    <div class="text-center font-bold p-2 text-sm">ה׳</div>
+                    <div class="text-center font-bold p-2 text-sm">ו׳</div>
+                    <div class="text-center font-bold p-2 text-sm">ש׳</div>
                 </div>
                 <div id="calendarGrid" class="grid grid-cols-7 gap-2"></div>
                 
@@ -1977,7 +2186,7 @@
 
     <script>
         // Firebase Configuration
-        const firebaseConfig = {
+      const firebaseConfig = {
             apiKey: "AIzaSyCdSRfJCoU6xwDych3l_3K_hBZBHOi9jVg",
             authDomain: "garage-17263.firebaseapp.com",
             projectId: "garage-17263",
@@ -1986,6 +2195,8 @@
             appId: "1:332265903935:web:237c0787a161fd36a7a58a",
             measurementId: "G-KLLCPECCDQ"
         };
+
+
 
         // ==========================================
         // CAR LOOKUP API - Israeli Government Data
@@ -2885,12 +3096,14 @@
             document.getElementById('carForm').reset();
             document.getElementById('imagePreview').innerHTML = '';
             document.getElementById('carModal').classList.remove('hidden');
+            hideUIElements(); // إخفاء FAB والقائمة السفلية
         }
 
         // Close Car Modal
         function closeCarModal() {
             document.getElementById('carModal').classList.add('hidden');
             editingCarId = null;
+            showUIElements(); // إظهار FAB والقائمة السفلية
         }
 
         // Edit Car
@@ -3811,11 +4024,13 @@
             renderCalendar();
             // تحديث حالة النافيجيشن
             updateActiveNav(2);
+            hideUIElements(); // إخفاء FAB والقائمة السفلية
         }
 
         // Close Calendar Modal
         function closeCalendarModal() {
             document.getElementById('calendarModal').classList.add('hidden');
+            showUIElements(); // إظهار FAB والقائمة السفلية
             // العودة إلى حالة البيت في النافيجيشن
             updateActiveNav(0);
         }
@@ -3852,12 +4067,14 @@
             
             document.getElementById('appointmentModal').classList.remove('hidden');
             renderMiniCalendar();
+            hideUIElements(); // إخفاء FAB والقائمة السفلية
         }
 
         // Close Appointment Modal
         function closeAppointmentModal() {
             document.getElementById('appointmentModal').classList.add('hidden');
             editingAppointmentId = null;
+            showUIElements(); // إظهار FAB والقائمة السفلية
         }
 
         // Previous Month for Mini Calendar
@@ -4066,6 +4283,7 @@
         // Render Calendar
         function renderCalendar() {
             const monthNames = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+            const dayNames = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
             document.getElementById('currentMonthYear').textContent = `${monthNames[currentMonth]} ${currentYear}`;
             
             const firstDay = new Date(currentYear, currentMonth, 1).getDay();
@@ -4077,7 +4295,7 @@
             // Add empty cells for days before month starts
             for (let i = 0; i < firstDay; i++) {
                 const emptyCell = document.createElement('div');
-                emptyCell.className = 'p-2';
+                emptyCell.style.visibility = 'hidden';
                 calendarGrid.appendChild(emptyCell);
             }
             
@@ -4087,34 +4305,33 @@
             
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayDate = new Date(currentYear, currentMonth, day);
+                const dayOfWeek = dayNames[dayDate.getDay()];
                 const dayAppointments = appointments.filter(apt => apt.date === dateStr);
                 
                 const dayCell = document.createElement('div');
                 
-                // Build class name based on conditions
-                let className = 'p-2 border rounded cursor-pointer hover:bg-blue-50';
+                // إضافة classes بناءً على الحالة
+                let classes = [];
                 
-                // Today gets purple border and background
                 if (dateStr === todayStr) {
-                    className += ' border-purple-500 border-2 bg-purple-50';
+                    classes.push('today');
                 }
                 
-                // Selected date gets blue background
-                if (dateStr === selectedDate && dateStr !== todayStr) {
-                    className += ' bg-blue-200';
+                if (dateStr === selectedDate) {
+                    classes.push('selected');
                 }
                 
-                // If selected date is today, show both (purple border + blue background)
-                if (dateStr === selectedDate && dateStr === todayStr) {
-                    className += ' bg-blue-200';
+                if (dayAppointments.length > 0) {
+                    classes.push('has-appointments');
                 }
                 
-                dayCell.className = className;
+                dayCell.className = classes.join(' ');
                 dayCell.onclick = () => selectDate(dateStr);
                 
                 dayCell.innerHTML = `
-                    <div class="text-center font-bold">${day}</div>
-                    ${dayAppointments.length > 0 ? `<div class="text-xs text-purple-600 text-center">${dayAppointments.length} פגישות</div>` : ''}
+                    <span>${dayOfWeek}</span>
+                    <span>${day}</span>
                 `;
                 
                 calendarGrid.appendChild(dayCell);
@@ -4211,11 +4428,13 @@
             renderDashboard();
             // تحديث حالة النافيجيشن
             updateActiveNav(1);
+            hideUIElements(); // إخفاء FAB والقائمة السفلية
         }
 
         // Close Dashboard
         function closeDashboard() {
             document.getElementById('dashboardModal').classList.add('hidden');
+            showUIElements(); // إظهار FAB والقائمة السفلية
             // العودة إلى حالة البيت في النافيجيشن
             updateActiveNav(0);
         }
@@ -4802,16 +5021,41 @@
             }
             // إغلاق جميع الـ modals المفتوحة أولاً
             closeAllModals();
+            
+            // منع سكرول الـ body على الموبايل
+            document.body.classList.add('modal-open');
+            
             // فتح نافذة النسخ الاحتياطي
             document.getElementById('backupModal').classList.remove('hidden');
-            updateBackupInfo();
+            
+            // تحديث المعلومات بشكل غير متزامن لتجنب التعليق
+            setTimeout(() => {
+                try {
+                    updateBackupInfo();
+                } catch (e) {
+                    console.error('Error updating backup info:', e);
+                }
+            }, 100);
+            
+            setTimeout(() => {
+                try {
+                    updateAutoBackupInfo();
+                } catch (e) {
+                    console.error('Error updating auto backup info:', e);
+                }
+            }, 200);
+            
             // تحديث حالة النافيجيشن
             updateActiveNav(3);
+            hideUIElements(); // إخفاء FAB والقائمة السفلية
         }
 
         // Close Backup Modal
         function closeBackupModal() {
             document.getElementById('backupModal').classList.add('hidden');
+            // السماح بسكرول الـ body مرة أخرى
+            document.body.classList.remove('modal-open');
+            showUIElements(); // إظهار FAB والقائمة السفلية
             // العودة إلى حالة البيت في النافيجيشن
             updateActiveNav(0);
         }
@@ -5152,6 +5396,727 @@
             
             await Promise.all(deletePromises);
         }
+
+        // ==========================================
+        // AUTOMATIC BACKUP SYSTEM - PROFESSIONAL
+        // ==========================================
+        
+        // Simple encryption/decryption (for backup security) - UTF-8 Compatible
+        function encryptData(data, password) {
+            const jsonStr = JSON.stringify(data);
+            // Convert to UTF-8 bytes first
+            const utf8Bytes = new TextEncoder().encode(jsonStr);
+            let encrypted = '';
+            for (let i = 0; i < utf8Bytes.length; i++) {
+                encrypted += String.fromCharCode(utf8Bytes[i] ^ password.charCodeAt(i % password.length));
+            }
+            // Use base64 encoding that works with all characters
+            return btoa(unescape(encodeURIComponent(encrypted)));
+        }
+        
+        function decryptData(encrypted, password) {
+            // Decode from base64
+            const decoded = decodeURIComponent(escape(atob(encrypted)));
+            let decryptedBytes = [];
+            for (let i = 0; i < decoded.length; i++) {
+                decryptedBytes.push(decoded.charCodeAt(i) ^ password.charCodeAt(i % password.length));
+            }
+            // Convert bytes back to UTF-8 string
+            const decrypted = new TextDecoder().decode(new Uint8Array(decryptedBytes));
+            return JSON.parse(decrypted);
+        }
+        
+        // Compress data (simple compression)
+        function compressBackup(data) {
+            const jsonStr = JSON.stringify(data);
+            // Remove unnecessary whitespace
+            return jsonStr.replace(/\s+/g, ' ');
+        }
+        
+        // Auto backup configuration
+        const AUTO_BACKUP_CONFIG = {
+            enabled: true,
+            dayOfWeek: 5, // Friday (0=Sunday, 5=Friday)
+            hour: 23, // 11 PM
+            minute: 0,
+            encryptionEnabled: true
+        };
+        
+        // Get user's encryption password
+        function getBackupPassword() {
+            const saved = localStorage.getItem('backupPassword');
+            if (saved) return saved;
+            
+            const password = prompt('🔒 הגדר סיסמת הצפנה לגיבוי (זכור אותה!)');
+            if (password && password.length >= 4) {
+                localStorage.setItem('backupPassword', password);
+                return password;
+            }
+            return null;
+        }
+        
+        // Save backup to IndexedDB with proper version handling
+        async function saveBackupLocally(backupData) {
+            return new Promise((resolve, reject) => {
+                // Delete old database first to avoid version conflicts
+                const deleteRequest = indexedDB.deleteDatabase('DRVN_Backups');
+                
+                deleteRequest.onsuccess = () => {
+                    createAndSaveBackup();
+                };
+                
+                deleteRequest.onerror = () => {
+                    // If delete fails, try to save anyway
+                    createAndSaveBackup();
+                };
+                
+                deleteRequest.onblocked = () => {
+                    // If blocked, try to save anyway
+                    createAndSaveBackup();
+                };
+                
+                function createAndSaveBackup() {
+                    const request = indexedDB.open('DRVN_Backups', 1);
+                    
+                    request.onerror = () => {
+                        console.error('IndexedDB error:', request.error);
+                        reject(request.error);
+                    };
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains('backups')) {
+                            const objectStore = db.createObjectStore('backups', { keyPath: 'id' });
+                            objectStore.createIndex('date', 'date', { unique: false });
+                        }
+                    };
+                    
+                    request.onsuccess = (event) => {
+                        const db = event.target.result;
+                        
+                        try {
+                            const transaction = db.transaction(['backups'], 'readwrite');
+                            const store = transaction.objectStore('backups');
+                            
+                            const backup = {
+                                id: Date.now(),
+                                date: new Date().toISOString(),
+                                data: backupData,
+                                size: JSON.stringify(backupData).length,
+                                carsCount: backupData.cars.length,
+                                maintenanceCount: backupData.maintenance.length
+                            };
+                            
+                            const addRequest = store.add(backup);
+                            
+                            addRequest.onsuccess = () => {
+                                db.close();
+                                resolve(backup);
+                            };
+                            
+                            addRequest.onerror = () => {
+                                db.close();
+                                reject(addRequest.error);
+                            };
+                            
+                            transaction.onerror = () => {
+                                db.close();
+                                reject(transaction.error);
+                            };
+                        } catch (error) {
+                            db.close();
+                            reject(error);
+                        }
+                    };
+                }
+            });
+        }
+        
+        // Clean old backups (keep only last 4)
+        // Get all saved backups with proper error handling
+        async function getSavedBackups() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('DRVN_Backups', 1);
+                
+                request.onerror = () => {
+                    console.error('Error opening database:', request.error);
+                    resolve([]); // Return empty array on error
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('backups')) {
+                        const objectStore = db.createObjectStore('backups', { keyPath: 'id' });
+                        objectStore.createIndex('date', 'date', { unique: false });
+                    }
+                };
+                
+                request.onsuccess = (event) => {
+                    const db = event.target.result;
+                    
+                    if (!db.objectStoreNames.contains('backups')) {
+                        db.close();
+                        resolve([]);
+                        return;
+                    }
+                    
+                    try {
+                        const transaction = db.transaction(['backups'], 'readonly');
+                        const store = transaction.objectStore('backups');
+                        const getAllRequest = store.getAll();
+                        
+                        getAllRequest.onsuccess = () => {
+                            const backups = getAllRequest.result || [];
+                            backups.sort((a, b) => new Date(b.date) - new Date(a.date));
+                            db.close();
+                            resolve(backups);
+                        };
+                        
+                        getAllRequest.onerror = () => {
+                            db.close();
+                            resolve([]);
+                        };
+                    } catch (error) {
+                        db.close();
+                        resolve([]);
+                    }
+                };
+            });
+        }
+        
+        // Create automatic backup (simplified with localStorage fallback)
+        async function createAutoBackup(isManual = false) {
+            try {
+                if (!isManual) {
+                    console.log('🔄 Starting automatic backup...');
+                }
+                
+                // Collect all data
+                const backupData = {
+                    version: '2.0',
+                    type: isManual ? 'manual' : 'automatic',
+                    exportDate: new Date().toISOString(),
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email,
+                    cars: [],
+                    maintenance: [],
+                    appointments: [],
+                    settings: {}
+                };
+                
+                // Get cars (without images to keep size small)
+                backupData.cars = cars.map(car => ({
+                    ...car,
+                    imageUrl: null
+                }));
+                
+                // Get maintenance
+                const maintenanceSnapshot = await db.collection('maintenance')
+                    .where('userId', '==', currentUser.uid)
+                    .get();
+                
+                maintenanceSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    backupData.maintenance.push({
+                        id: doc.id,
+                        ...data,
+                        images: [],
+                        createdAt: data.createdAt?.toMillis() || null,
+                        updatedAt: data.updatedAt?.toMillis() || null
+                    });
+                });
+                
+                // Get appointments
+                const appointmentsSnapshot = await db.collection('appointments')
+                    .where('userId', '==', currentUser.uid)
+                    .get();
+                
+                appointmentsSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    backupData.appointments.push({
+                        id: doc.id,
+                        ...data,
+                        createdAt: data.createdAt?.toMillis() || null
+                    });
+                });
+                
+                // Get settings
+                const settingsDoc = await db.collection('settings').doc(currentUser.uid).get();
+                if (settingsDoc.exists) {
+                    backupData.settings = settingsDoc.data();
+                }
+                
+                // Try IndexedDB first, fallback to localStorage
+                try {
+                    await saveBackupLocally(backupData);
+                } catch (indexedDBError) {
+                    console.warn('IndexedDB failed, using localStorage:', indexedDBError);
+                    // Fallback to localStorage (simpler but limited to ~5-10MB)
+                    saveBackupToLocalStorage(backupData);
+                }
+                
+                // Update last backup date
+                localStorage.setItem('lastAutoBackupDate', new Date().toISOString());
+                
+                // Log backup history
+                const history = JSON.parse(localStorage.getItem('backupHistory') || '[]');
+                history.unshift({
+                    date: new Date().toISOString(),
+                    type: isManual ? 'manual' : 'automatic',
+                    carsCount: backupData.cars.length,
+                    size: JSON.stringify(backupData).length
+                });
+                // Keep only last 20 records
+                if (history.length > 20) history.length = 20;
+                localStorage.setItem('backupHistory', JSON.stringify(history));
+                
+                if (isManual) {
+                    showNotification('✅ הגיבוי נוצר בהצלחה!');
+                } else {
+                    console.log('✅ Automatic backup completed successfully');
+                }
+                
+                updateBackupInfo();
+                
+                return true;
+            } catch (error) {
+                console.error('Error creating auto backup:', error);
+                if (isManual) {
+                    alert('שגיאה ביצירת גיבוי: ' + error.message);
+                }
+                return false;
+            }
+        }
+        
+        // LocalStorage backup fallback (simpler and more reliable)
+        function saveBackupToLocalStorage(backupData) {
+            try {
+                const backups = JSON.parse(localStorage.getItem('localBackups') || '[]');
+                
+                const backup = {
+                    id: Date.now(),
+                    date: new Date().toISOString(),
+                    data: backupData,
+                    size: JSON.stringify(backupData).length,
+                    carsCount: backupData.cars.length,
+                    maintenanceCount: backupData.maintenance.length
+                };
+                
+                backups.unshift(backup);
+                
+                // Save all backups (no limit)
+                const compressed = JSON.stringify(backups);
+                localStorage.setItem('localBackups', compressed);
+                
+                console.log('✅ Backup saved to localStorage');
+            } catch (error) {
+                console.error('LocalStorage backup failed:', error);
+                // If localStorage is full, remove old backups and retry
+                if (error.name === 'QuotaExceededError') {
+                    const backups = JSON.parse(localStorage.getItem('localBackups') || '[]');
+                    // Keep only last 10 to free space
+                    if (backups.length > 10) {
+                        backups.length = 10;
+                        localStorage.setItem('localBackups', JSON.stringify(backups));
+                    }
+                    saveBackupToLocalStorage(backupData);
+                }
+            }
+        }
+        
+        // Get backups from localStorage
+        function getLocalStorageBackups() {
+            try {
+                return JSON.parse(localStorage.getItem('localBackups') || '[]');
+            } catch (error) {
+                console.error('Error reading localStorage backups:', error);
+                return [];
+            }
+        }
+        
+        // Check if backup is needed today
+        function shouldRunBackup() {
+            const now = new Date();
+            const dayOfWeek = now.getDay();
+            const hour = now.getHours();
+            const minute = now.getMinutes();
+            
+            // Check if it's the right day and time
+            if (dayOfWeek !== AUTO_BACKUP_CONFIG.dayOfWeek) return false;
+            if (hour !== AUTO_BACKUP_CONFIG.hour) return false;
+            if (minute !== AUTO_BACKUP_CONFIG.minute) return false;
+            
+            // Check if already backed up today
+            const lastBackup = localStorage.getItem('lastAutoBackupDate');
+            if (lastBackup) {
+                const lastDate = new Date(lastBackup);
+                const today = new Date();
+                if (lastDate.toDateString() === today.toDateString()) {
+                    return false; // Already backed up today
+                }
+            }
+            
+            return true;
+        }
+        
+        // Start automatic backup scheduler
+        function startAutoBackupScheduler() {
+            if (!AUTO_BACKUP_CONFIG.enabled) return;
+            
+            // Update backup info immediately
+            updateAutoBackupInfo();
+            
+            // Update info every minute
+            setInterval(() => {
+                updateAutoBackupInfo();
+            }, 60000);
+            
+            // Check for backup every minute
+            setInterval(() => {
+                if (shouldRunBackup()) {
+                    createAutoBackup(false);
+                }
+            }, 60000);
+            
+            console.log('🕐 Auto backup scheduler started');
+            console.log(`📅 Next backup: Friday at ${AUTO_BACKUP_CONFIG.hour}:${AUTO_BACKUP_CONFIG.minute.toString().padStart(2, '0')}`);
+        }
+        
+        // Update auto backup information display
+        function updateAutoBackupInfo() {
+            try {
+                // Last backup time - simplified
+                const lastBackup = localStorage.getItem('lastAutoBackupDate');
+                const lastBackupEl = document.getElementById('lastAutoBackupTime');
+                if (lastBackupEl) {
+                    if (lastBackup) {
+                        const date = new Date(lastBackup);
+                        const now = new Date();
+                        const days = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+                        
+                        if (days > 0) {
+                            lastBackupEl.textContent = `לפני ${days} ימים`;
+                        } else {
+                            lastBackupEl.textContent = 'היום';
+                        }
+                    } else {
+                        lastBackupEl.textContent = 'טרם בוצע';
+                    }
+                }
+                
+                // Time until backup - simplified
+                const timeUntilEl = document.getElementById('timeUntilBackup');
+                if (timeUntilEl) {
+                    const now = new Date();
+                    const dayOfWeek = now.getDay();
+                    const daysUntilFriday = (5 - dayOfWeek + 7) % 7 || 7;
+                    
+                    if (daysUntilFriday > 1) {
+                        timeUntilEl.textContent = `${daysUntilFriday} ימים`;
+                    } else if (daysUntilFriday === 1) {
+                        timeUntilEl.textContent = 'מחר';
+                    } else {
+                        timeUntilEl.textContent = 'היום';
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating auto backup info:', error);
+            }
+        }
+        
+        // Get next backup date
+        function getNextBackupDate() {
+            const now = new Date();
+            let next = new Date();
+            
+            // Set to next Friday at 23:00
+            const daysUntilFriday = (5 - now.getDay() + 7) % 7;
+            next.setDate(now.getDate() + daysUntilFriday);
+            next.setHours(AUTO_BACKUP_CONFIG.hour, AUTO_BACKUP_CONFIG.minute, 0, 0);
+            
+            // If Friday 23:00 already passed this week, go to next week
+            if (next <= now) {
+                next.setDate(next.getDate() + 7);
+            }
+            
+            return next;
+        }
+        
+        // Test auto backup now (forces backup)
+        
+        // Show backup list modal
+        async function showBackupList() {
+            try {
+                // Try to get backups from both sources
+                let indexedBackups = [];
+                let localBackups = [];
+                
+                try {
+                    indexedBackups = await getSavedBackups();
+                } catch (e) {
+                    console.warn('IndexedDB not available:', e);
+                }
+                
+                try {
+                    localBackups = getLocalStorageBackups();
+                } catch (e) {
+                    console.warn('LocalStorage not available:', e);
+                }
+                
+                // Combine and deduplicate backups
+                const allBackups = [...indexedBackups, ...localBackups];
+                const uniqueBackups = allBackups.filter((backup, index, self) =>
+                    index === self.findIndex((b) => b.id === backup.id)
+                );
+                uniqueBackups.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                const backups = uniqueBackups; // Show all backups, no limit
+                const history = JSON.parse(localStorage.getItem('backupHistory') || '[]');
+                
+                let html = `
+                    <div class="space-y-4">
+                        <div class="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-lg border-2 border-amber-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-lg font-bold text-amber-900">📊 סטטיסטיקות גיבוי</h3>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 text-sm">
+                                <div class="bg-white p-3 rounded-lg">
+                                    <div class="text-gray-600">גיבויים שמורים</div>
+                                    <div class="text-2xl font-bold text-amber-600">${backups.length}</div>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg">
+                                    <div class="text-gray-600">גיבוי הבא</div>
+                                    <div class="text-lg font-bold text-blue-600">יום ו׳ 23:00</div>
+                                </div>
+                            </div>
+                        </div>
+                `;
+                
+                if (backups.length > 0) {
+                    html += `
+                        <div class="bg-white p-4 rounded-lg border-2">
+                            <h3 class="text-lg font-bold mb-3">💾 גיבויים זמינים</h3>
+                            <div class="space-y-2">
+                    `;
+                    
+                    backups.forEach((backup, index) => {
+                        const date = new Date(backup.date);
+                        const size = (backup.size / 1024).toFixed(2);
+                        html += `
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:border-amber-500 transition">
+                                <div class="flex-1">
+                                    <div class="font-bold">${index === 0 ? '🌟 ' : ''}גיבוי ${index + 1}</div>
+                                    <div class="text-sm text-gray-600">${date.toLocaleString('he-IL')}</div>
+                                    <div class="text-xs text-gray-500">${backup.carsCount} רכבים • ${size} KB</div>
+                                </div>
+                                <button onclick="restoreBackup(${backup.id})" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold">
+                                    שחזר
+                                </button>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                if (history.length > 0) {
+                    html += `
+                        <div class="bg-white p-4 rounded-lg border-2">
+                            <h3 class="text-lg font-bold mb-3">📜 היסטוריית גיבויים</h3>
+                            <div class="space-y-1 max-h-48 overflow-y-auto">
+                    `;
+                    
+                    history.slice(0, 10).forEach(record => {
+                        const date = new Date(record.date);
+                        const typeIcon = record.type === 'manual' ? '👤' : '🤖';
+                        const typeName = record.type === 'manual' ? 'ידני' : 'אוטומטי';
+                        html += `
+                            <div class="flex items-center justify-between text-sm p-2 hover:bg-gray-50 rounded">
+                                <div class="flex items-center gap-2">
+                                    <span>${typeIcon}</span>
+                                    <span>${date.toLocaleDateString('he-IL')} ${date.toLocaleTimeString('he-IL', {hour: '2-digit', minute: '2-digit'})}</span>
+                                </div>
+                                <div class="text-gray-600">${typeName} • ${record.carsCount} רכבים</div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                html += `
+                    </div>
+                `;
+                
+                // Show in a modal (reuse backup modal)
+                const modal = document.getElementById('backupModal');
+                if (!modal) {
+                    console.error('Modal not found');
+                    return;
+                }
+                
+                // Find content div - try multiple selectors
+                let contentDiv = modal.querySelector('div[class*="p-3"]') || 
+                                 modal.querySelector('div[class*="p-6"]') ||
+                                 modal.querySelector('.modal-content');
+                
+                if (!contentDiv) {
+                    console.error('Content div not found');
+                    alert('שגיאה: לא ניתן להציג את רשימת הגיבויים');
+                    return;
+                }
+                
+                const originalContent = contentDiv.innerHTML;
+                contentDiv.innerHTML = html;
+                
+                // Add modal-open class
+                document.body.classList.add('modal-open');
+                modal.classList.remove('hidden');
+                
+                // Add back button
+                const backBtn = document.createElement('button');
+                backBtn.className = 'mt-4 w-full bg-gray-500 hover:bg-gray-600 active:bg-gray-700 text-white py-3 rounded-lg font-bold transition';
+                backBtn.textContent = '← חזור';
+                backBtn.onclick = () => {
+                    contentDiv.innerHTML = originalContent;
+                    // Re-initialize any event listeners if needed
+                    setTimeout(() => {
+                        try {
+                            updateAutoBackupInfo();
+                        } catch (e) {
+                            console.error('Error updating info:', e);
+                        }
+                    }, 100);
+                };
+                contentDiv.appendChild(backBtn);
+                
+            } catch (error) {
+                console.error('Error showing backup list:', error);
+                alert('שגיאה בטעינת רשימת גיבויים');
+            }
+        }
+        
+        // Restore backup from IndexedDB or localStorage
+        async function restoreBackup(backupId) {
+            if (!confirm('⚠️ האם אתה בטוח? זה ימחק את כל הנתונים הנוכחיים וישחזר את הגיבוי!')) {
+                return;
+            }
+            
+            try {
+                // Try to get the backup from both sources
+                let backup = null;
+                
+                try {
+                    const indexedBackups = await getSavedBackups();
+                    backup = indexedBackups.find(b => b.id === backupId);
+                } catch (e) {
+                    console.warn('IndexedDB not available:', e);
+                }
+                
+                if (!backup) {
+                    try {
+                        const localBackups = getLocalStorageBackups();
+                        backup = localBackups.find(b => b.id === backupId);
+                    } catch (e) {
+                        console.warn('LocalStorage not available:', e);
+                    }
+                }
+                
+                if (!backup) {
+                    alert('גיבוי לא נמצא');
+                    return;
+                }
+                
+                showBackupProgress(true);
+                updateBackupProgress(10, 'טוען גיבוי...');
+                
+                let backupData = backup.data;
+                
+                // Decrypt if needed
+                if (typeof backupData === 'string') {
+                    const password = localStorage.getItem('backupPassword');
+                    if (password) {
+                        try {
+                            backupData = decryptData(backupData, password);
+                        } catch (e) {
+                            const userPassword = prompt('🔒 הזן סיסמת הצפנה:');
+                            if (!userPassword) {
+                                showBackupProgress(false);
+                                return;
+                            }
+                            backupData = decryptData(backupData, userPassword);
+                        }
+                    }
+                }
+                
+                updateBackupProgress(30, 'מוחק נתונים ישנים...');
+                await deleteAllUserData();
+                
+                updateBackupProgress(50, 'משחזר רכבים...');
+                for (const car of backupData.cars) {
+                    const carData = { ...car };
+                    delete carData.id;
+                    await db.collection('cars').add(carData);
+                }
+                
+                updateBackupProgress(70, 'משחזר טיפולים...');
+                for (const maintenance of backupData.maintenance) {
+                    const maintenanceData = { ...maintenance };
+                    delete maintenanceData.id;
+                    
+                    if (maintenanceData.createdAt) {
+                        maintenanceData.createdAt = firebase.firestore.Timestamp.fromMillis(maintenanceData.createdAt);
+                    }
+                    if (maintenanceData.updatedAt) {
+                        maintenanceData.updatedAt = firebase.firestore.Timestamp.fromMillis(maintenanceData.updatedAt);
+                    }
+                    
+                    await db.collection('maintenance').add(maintenanceData);
+                }
+                
+                updateBackupProgress(90, 'משחזר פגישות...');
+                for (const appointment of backupData.appointments) {
+                    const appointmentData = { ...appointment };
+                    delete appointmentData.id;
+                    
+                    if (appointmentData.createdAt) {
+                        appointmentData.createdAt = firebase.firestore.Timestamp.fromMillis(appointmentData.createdAt);
+                    }
+                    
+                    await db.collection('appointments').add(appointmentData);
+                }
+                
+                updateBackupProgress(100, 'השחזור הושלם!');
+                setTimeout(() => {
+                    showBackupProgress(false);
+                    showNotification('✅ הנתונים שוחזרו בהצלחה!');
+                    closeBackupModal();
+                    loadCars();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error restoring backup:', error);
+                alert('שגיאה בשחזור גיבוי: ' + error.message);
+                showBackupProgress(false);
+            }
+        }
+        
+        // Initialize auto backup system when app loads
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Start scheduler after a short delay
+                setTimeout(() => {
+                    startAutoBackupScheduler();
+                }, 3000);
+            }
+        });
+
 
         // ==========================================
         // Browser Back Button Support for Mobile
@@ -5548,11 +6513,6 @@ window.addEventListener('load', function() {
 
 // Show Account Modal
 function showAccountModal() {
-    // إغلاق السايد بار إذا كان مفتوحاً
-    const sidebar = document.getElementById('sidebar');
-    if (sidebar && sidebar.classList.contains('open')) {
-        toggleSidebar();
-    }
     // إغلاق جميع الـ modals المفتوحة أولاً
     closeAllModals();
     
@@ -5576,6 +6536,7 @@ function showAccountModal() {
     `;
     
     modal.classList.remove('hidden');
+    hideUIElements(); // إخفاء FAB والقائمة السفلية
     
     // Load subscription data
     db.collection('users').doc(currentUser.uid).get()
@@ -5662,6 +6623,7 @@ function closeAccountModal() {
     if (modal) {
         modal.classList.add('hidden');
     }
+    showUIElements(); // إظهار FAB والقائمة السفلية
     // العودة إلى حالة البيت في النافيجيشن
     updateActiveNav(0);
 }
@@ -5688,6 +6650,21 @@ function closeAccountModal() {
 
     <script>
         // Close all modals function
+        // Helper functions to show/hide FAB and bottom nav
+        function hideUIElements() {
+            const fab = document.querySelector('.fab-button');
+            const bottomNav = document.querySelector('.mobile-bottom-nav');
+            if (fab) fab.classList.add('hide-on-modal');
+            if (bottomNav) bottomNav.classList.add('hide-on-modal');
+        }
+        
+        function showUIElements() {
+            const fab = document.querySelector('.fab-button');
+            const bottomNav = document.querySelector('.mobile-bottom-nav');
+            if (fab) fab.classList.remove('hide-on-modal');
+            if (bottomNav) bottomNav.classList.remove('hide-on-modal');
+        }
+        
         function closeAllModals() {
             // إغلاق جميع النوافذ المنبثقة
             const modals = ['dashboardModal', 'calendarModal', 'backupModal', 'accountModal', 'carModal', 'appointmentModal', 'carSelectorModal'];
@@ -5697,6 +6674,8 @@ function closeAccountModal() {
                     modal.classList.add('hidden');
                 }
             });
+            // إظهار FAB والقائمة السفلية
+            showUIElements();
         }
         
         // Scroll to top function

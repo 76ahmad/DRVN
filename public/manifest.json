@@ -1,27 +1,119 @@
 {
   "name": "DRVN - מערכת ניהול מוסך",
   "short_name": "DRVN",
-  "description": "מערכת ניהול מוסך מקצועית",
+  "description": "מערכת ניהול מוסך מקצועית - ניהול רכבים, תורים ומנויים",
   "start_url": "/",
-  "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#0d9488",
-  "orientation": "portrait-primary",
+  "background_color": "#1e242c",
+  "theme_color": "#ffc107",
+  "orientation": "portrait",
   "dir": "rtl",
   "lang": "he",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%230d9488' width='192' height='192' rx='42'/%3E%3Ctext x='96' y='145' font-size='120' text-anchor='middle' fill='white'%3E🚗%3C/text%3E%3C/svg%3E",
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect fill='%230d9488' width='512' height='512' rx='115'/%3E%3Ctext x='256' y='390' font-size='320' text-anchor='middle' fill='white'%3E🚗%3C/text%3E%3C/svg%3E",
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/01-login.png",
+      "sizes": "1011x1910",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Login Screen"
+    },
+    {
+      "src": "/screenshots/02-home.png",
+      "sizes": "923x1910",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Home - Car List"
+    },
+    {
+      "src": "/screenshots/03-calendar.png",
+      "sizes": "923x1910",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Calendar - יומן פגישות"
+    },
+    {
+      "src": "/screenshots/04-menu.png",
+      "sizes": "923x1910",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Menu - תפריט"
+    }
+  ],
+  "categories": ["business", "productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "הוסף רכב",
+      "short_name": "רכב חדש",
+      "description": "הוסף רכב חדש למערכת",
+      "url": "/?action=add-car",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "יומן",
+      "short_name": "תורים",
+      "description": "צפה ביומן הפגישות",
+      "url": "/?action=calendar",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }

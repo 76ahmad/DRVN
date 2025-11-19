@@ -153,7 +153,7 @@
         const TRIAL_DAYS = 30;
 
         // Firebase Configuration (same as main app)
-        const firebaseConfig = {
+       const firebaseConfig = {
             apiKey: "AIzaSyCdSRfJCoU6xwDych3l_3K_hBZBHOi9jVg",
             authDomain: "garage-17263.firebaseapp.com",
             projectId: "garage-17263",
@@ -162,6 +162,8 @@
             appId: "1:332265903935:web:237c0787a161fd36a7a58a",
             measurementId: "G-KLLCPECCDQ"
         };
+
+
 
         // Initialize Firebase
         app = firebase.initializeApp(firebaseConfig);
@@ -173,13 +175,8 @@
             if (!user) {
                 // Not logged in - redirect to login
                 window.location.href = 'login.html';
-            } else if (!user.emailVerified) {
-                // Email not verified - logout and redirect
-                alert('אנא אמת את האימייל שלך לפני שתתחבר.\nيرجى تأكيد بريدك الإلكتروني قبل تسجيل الدخول.');
-                await auth.signOut();
-                window.location.href = 'login.html';
             } else {
-                // User authenticated and verified
+                // User authenticated
                 currentUser = user;
                 document.getElementById('userEmail').textContent = user.email;
                 
@@ -401,40 +398,25 @@
             // Store payment ID for verification
             localStorage.setItem('pendingPayment', paymentId);
             
-            // Show instructions with ad blocker warning
-            alert(
+            // Show instructions
+            const confirmed = confirm(
                 `עכשיו תועבר ל-PayPal לתשלום.\n\n` +
-                `⚠️ חשוב: אם יש לך Ad Blocker - כבה אותו!\n` +
-                `(Ad Blocker עלול לחסום את PayPal)\n\n` +
+                `💳 סכום: ₪${SUBSCRIPTION_PRICE}\n` +
+                `🔢 מזהה תשלום: ${paymentId}\n\n` +
                 `✅ לאחר השלמת התשלום:\n` +
                 `1. שלח צילום מסך של אישור התשלום ל-WhatsApp\n` +
-                `2. כתוב את מספר העסקה הזה: ${paymentId}\n` +
+                `2. כתוב את מספר העסקה: ${paymentId}\n` +
                 `3. המנוי שלך יופעל תוך 24 שעות\n\n` +
-                `💳 סכום: ₪${SUBSCRIPTION_PRICE}\n` +
-                `🔗 PayPal: paypal.me/drvncars\n` +
-                `🔢 מזהה תשלום: ${paymentId}`
+                `האם להמשיך ל-PayPal?`
             );
             
-            // Try to open PayPal
-            const paypalWindow = window.open(paypalUrl, '_blank');
-            
-            // Check if popup was blocked
-            if (!paypalWindow || paypalWindow.closed || typeof paypalWindow.closed == 'undefined') {
-                // Popup blocked - show manual link
-                alert(
-                    `⚠️ הדפדפן חסם את החלון!\n\n` +
-                    `אנא:\n` +
-                    `1. כבה את Ad Blocker\n` +
-                    `2. אפשר Pop-ups לאתר זה\n` +
-                    `3. נסה שוב\n\n` +
-                    `או העתק את הקישור הבא:\n` +
-                    `${paypalUrl}\n\n` +
-                    `מספר עסקה: ${paymentId}`
-                );
+            if (confirmed) {
+                // Redirect directly to PayPal (won't be blocked)
+                window.location.href = paypalUrl;
+            } else {
+                // User cancelled - show manual option
+                showPaymentConfirmation(paymentId);
             }
-            
-            // Show confirmation button
-            showPaymentConfirmation(paymentId);
         }
 
         // Show Payment Confirmation
