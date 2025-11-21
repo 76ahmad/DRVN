@@ -5310,81 +5310,167 @@
             const file = event.target.files[0];
             if (!file) return;
             
-            if (!confirm('האם אתה בטוח? זה ימחק את כל הנתונים הנוכחיים!')) {
+            // Check if user is authenticated
+            if (!currentUser) {
+                alert('❌ שגיאה: נא להתחבר תחילה');
                 event.target.value = '';
                 return;
             }
             
+            if (!confirm('⚠️ האם אתה בטוח? זה ימחק את כל הנתונים הנוכחיים וישחזר את הגיבוי!')) {
+                event.target.value = '';
+                return;
+            }
+            
+            // Ensure backup modal is open
+            const backupModal = document.getElementById('backupModal');
+            if (backupModal && backupModal.classList.contains('hidden')) {
+                openBackupModal();
+                // Wait for modal to render
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
             try {
+                showBackupProgress(true);
+                updateBackupProgress(5, 'קורא קובץ...');
+                
                 const text = await file.text();
                 const backupData = JSON.parse(text);
                 
                 // Validate backup
                 if (!backupData.version || !backupData.cars) {
-                    throw new Error('קובץ גיבוי לא תקין');
+                    throw new Error('קובץ גיבוי לא תקין - חסר מידע חיוני');
                 }
                 
-                showBackupProgress(true);
+                // Validate userId matches
+                if (backupData.cars.length > 0 && backupData.cars[0].userId !== currentUser.uid) {
+                    if (!confirm('⚠️ הגיבוי לא שייך למשתמש הנוכחי. להמשיך בכל זאת?')) {
+                        throw new Error('הגיבוי בוטל');
+                    }
+                }
+                
                 updateBackupProgress(10, 'מוחק נתונים ישנים...');
                 
-                // Delete existing data
-                await deleteAllUserData();
+                try {
+                    // Delete existing data with better error handling
+                    await deleteAllUserData();
+                } catch (deleteError) {
+                    console.warn('Warning during delete:', deleteError);
+                    // Continue even if delete partially fails
+                }
                 
                 updateBackupProgress(30, 'משחזר רכבים...');
-                // Restore cars
+                // Restore cars with userId fix
+                let carsRestored = 0;
                 for (const car of backupData.cars) {
-                    const carData = { ...car };
-                    delete carData.id;
-                    await db.collection('cars').add(carData);
+                    try {
+                        const carData = { ...car };
+                        delete carData.id;
+                        // Ensure userId is set correctly
+                        carData.userId = currentUser.uid;
+                        carData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+                        await db.collection('cars').add(carData);
+                        carsRestored++;
+                    } catch (carError) {
+                        console.error('Error restoring car:', carError);
+                    }
                 }
                 
-                updateBackupProgress(50, 'משחזר טיפולים...');
+                updateBackupProgress(50, `משחזר טיפולים... (${carsRestored} רכבים)` );
                 // Restore maintenance
+                let maintenanceRestored = 0;
                 for (const maintenance of backupData.maintenance) {
-                    const maintenanceData = { ...maintenance };
-                    delete maintenanceData.id;
-                    
-                    // Convert timestamps back
-                    if (maintenanceData.createdAt) {
-                        maintenanceData.createdAt = firebase.firestore.Timestamp.fromMillis(maintenanceData.createdAt);
+                    try {
+                        const maintenanceData = { ...maintenance };
+                        delete maintenanceData.id;
+                        // Ensure userId is set correctly
+                        maintenanceData.userId = currentUser.uid;
+                        
+                        // Convert timestamps back
+                        if (maintenanceData.createdAt) {
+                            if (typeof maintenanceData.createdAt === 'number') {
+                                maintenanceData.createdAt = firebase.firestore.Timestamp.fromMillis(maintenanceData.createdAt);
+                            }
+                        } else {
+                            maintenanceData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                        }
+                        
+                        if (maintenanceData.updatedAt) {
+                            if (typeof maintenanceData.updatedAt === 'number') {
+                                maintenanceData.updatedAt = firebase.firestore.Timestamp.fromMillis(maintenanceData.updatedAt);
+                            }
+                        } else {
+                            maintenanceData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+                        }
+                        
+                        await db.collection('maintenance').add(maintenanceData);
+                        maintenanceRestored++;
+                    } catch (maintenanceError) {
+                        console.error('Error restoring maintenance:', maintenanceError);
                     }
-                    if (maintenanceData.updatedAt) {
-                        maintenanceData.updatedAt = firebase.firestore.Timestamp.fromMillis(maintenanceData.updatedAt);
-                    }
-                    
-                    await db.collection('maintenance').add(maintenanceData);
                 }
                 
-                updateBackupProgress(70, 'משחזר פגישות...');
+                updateBackupProgress(70, `משחזר פגישות... (${maintenanceRestored} טיפולים)`);
                 // Restore appointments
+                let appointmentsRestored = 0;
                 for (const appointment of backupData.appointments) {
-                    const appointmentData = { ...appointment };
-                    delete appointmentData.id;
-                    
-                    if (appointmentData.createdAt) {
-                        appointmentData.createdAt = firebase.firestore.Timestamp.fromMillis(appointmentData.createdAt);
+                    try {
+                        const appointmentData = { ...appointment };
+                        delete appointmentData.id;
+                        // Ensure userId is set correctly
+                        appointmentData.userId = currentUser.uid;
+                        
+                        if (appointmentData.createdAt) {
+                            if (typeof appointmentData.createdAt === 'number') {
+                                appointmentData.createdAt = firebase.firestore.Timestamp.fromMillis(appointmentData.createdAt);
+                            }
+                        } else {
+                            appointmentData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                        }
+                        
+                        await db.collection('appointments').add(appointmentData);
+                        appointmentsRestored++;
+                    } catch (appointmentError) {
+                        console.error('Error restoring appointment:', appointmentError);
                     }
-                    
-                    await db.collection('appointments').add(appointmentData);
                 }
                 
-                updateBackupProgress(90, 'משחזר הגדרות...');
+                updateBackupProgress(90, `משחזר הגדרות... (${appointmentsRestored} פגישות)`);
                 // Restore settings
                 if (backupData.settings) {
-                    await db.collection('settings').doc(currentUser.uid).set(backupData.settings);
+                    try {
+                        await db.collection('settings').doc(currentUser.uid).set(backupData.settings, { merge: true });
+                    } catch (settingsError) {
+                        console.error('Error restoring settings:', settingsError);
+                    }
                 }
                 
-                updateBackupProgress(100, 'השחזור הושלם!');
+                updateBackupProgress(100, '✅ השחזור הושלם!');
                 setTimeout(() => {
                     showBackupProgress(false);
-                    alert('השחזור הושלם בהצלחה! הדף יתרענן כעת.');
+                    alert(`✅ השחזור הושלם בהצלחה!
+
+📊 סיכום:
+• ${carsRestored} רכבים
+• ${maintenanceRestored} טיפולים
+• ${appointmentsRestored} פגישות
+
+הדף יתרענן כעת.`);
                     window.location.reload();
-                }, 1000);
+                }, 1500);
                 
             } catch (error) {
                 console.error('Error restoring backup:', error);
-                alert('שגיאה בשחזור גיבוי: ' + error.message);
                 showBackupProgress(false);
+                
+                let errorMsg = 'שגיאה בשחזור גיבוי';
+                if (error.code === 'permission-denied') {
+                    errorMsg = '❌ שגיאת הרשאות: אין לך הרשאה לגשת לנתונים אלה.\n\nייתכן שהבעיה היא:\n• לא מחובר כמשתמש הנכון\n• הגיבוי שייך למשתמש אחר\n• בעיית הרשאות ב-Firebase';
+                } else if (error.message) {
+                    errorMsg = error.message;
+                }
+                
+                alert(errorMsg);
             }
             
             event.target.value = '';
@@ -5392,35 +5478,62 @@
 
         // Delete All User Data
         async function deleteAllUserData() {
-            // Delete cars
-            const carsSnapshot = await db.collection('cars')
-                .where('userId', '==', currentUser.uid)
-                .get();
+            if (!currentUser) {
+                throw new Error('No user authenticated');
+            }
             
             const deletePromises = [];
-            carsSnapshot.forEach(doc => {
-                deletePromises.push(db.collection('cars').doc(doc.id).delete());
-            });
             
-            // Delete maintenance
-            const maintenanceSnapshot = await db.collection('maintenance')
-                .where('userId', '==', currentUser.uid)
-                .get();
+            try {
+                // Delete cars
+                const carsSnapshot = await db.collection('cars')
+                    .where('userId', '==', currentUser.uid)
+                    .get();
+                
+                carsSnapshot.forEach(doc => {
+                    deletePromises.push(
+                        db.collection('cars').doc(doc.id).delete()
+                            .catch(err => console.warn('Failed to delete car:', doc.id, err))
+                    );
+                });
+            } catch (error) {
+                console.error('Error querying cars:', error);
+            }
             
-            maintenanceSnapshot.forEach(doc => {
-                deletePromises.push(db.collection('maintenance').doc(doc.id).delete());
-            });
+            try {
+                // Delete maintenance
+                const maintenanceSnapshot = await db.collection('maintenance')
+                    .where('userId', '==', currentUser.uid)
+                    .get();
+                
+                maintenanceSnapshot.forEach(doc => {
+                    deletePromises.push(
+                        db.collection('maintenance').doc(doc.id).delete()
+                            .catch(err => console.warn('Failed to delete maintenance:', doc.id, err))
+                    );
+                });
+            } catch (error) {
+                console.error('Error querying maintenance:', error);
+            }
             
-            // Delete appointments
-            const appointmentsSnapshot = await db.collection('appointments')
-                .where('userId', '==', currentUser.uid)
-                .get();
+            try {
+                // Delete appointments
+                const appointmentsSnapshot = await db.collection('appointments')
+                    .where('userId', '==', currentUser.uid)
+                    .get();
+                
+                appointmentsSnapshot.forEach(doc => {
+                    deletePromises.push(
+                        db.collection('appointments').doc(doc.id).delete()
+                            .catch(err => console.warn('Failed to delete appointment:', doc.id, err))
+                    );
+                });
+            } catch (error) {
+                console.error('Error querying appointments:', error);
+            }
             
-            appointmentsSnapshot.forEach(doc => {
-                deletePromises.push(db.collection('appointments').doc(doc.id).delete());
-            });
-            
-            await Promise.all(deletePromises);
+            // Wait for all deletions to complete (or fail)
+            await Promise.allSettled(deletePromises);
         }
 
         // ==========================================
