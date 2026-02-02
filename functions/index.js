@@ -1,635 +1,345 @@
-// Firebase Cloud Functions for DRVN Notifications
-// جميع أنواع الإشعارات - 8 أنواع
+/**
+ * DRVN - Automatic Appointment Reminders
+ * Firebase Cloud Functions
+ * 
+ * Features:
+ * - Check appointments every hour
+ * - Send reminder 24 hours before appointment
+ * - Send reminder 1 hour before appointment
+ * - Use OneSignal for push notifications
+ */
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const fetch = require('node-fetch');
 
+// Initialize Firebase Admin
 admin.initializeApp();
+const db = admin.firestore();
 
-// ==========================================
-// دالة مساعدة: إرسال إشعار
-// ==========================================
+// OneSignal Configuration
+const ONESIGNAL_APP_ID = '4e012ba3-f512-4afc-a3d2-3adf7fc9d6f1';
+const ONESIGNAL_REST_API_KEY = 'os_v2_app_jyasxi7vcjfpzi6shlpx7sow6fnaayv5tg2ucwuz4yp63gkm36alwxb4mn7p54sauyvat4ghhwt4k64pvzzmjfopxkxzq23awtp5smy';
 
-async function sendNotification(userId, title, body, data = {}) {
+/**
+ * Send Push Notification via OneSignal (New API v2)
+ */
+async function sendPushNotification(playerIds, title, message, data = {}) {
     try {
-        // الحصول على FCM Token من المستخدم
-        const userDoc = await admin.firestore()
-            .collection('users')
-            .doc(userId)
-            .get();
-        
-        if (!userDoc.exists) {
-            console.log('User not found:', userId);
-            return null;
-        }
-        
-        const userData = userDoc.data();
-        const fcmToken = userData.fcmToken;
-        
-        // تحقق من تفعيل الإشعارات
-        if (userData.notificationsDisabled === true) {
-            console.log('Notifications disabled for user:', userId);
-            return null;
-        }
-        
-        if (!fcmToken) {
-            console.log('No FCM token for user:', userId);
-            return null;
-        }
-        
-        // إنشاء رسالة الإشعار
-        const message = {
-            token: fcmToken,
-            notification: {
-                title: title,
-                body: body
+        console.log('📤 Sending notification to:', playerIds);
+
+        const response = await fetch('https://api.onesignal.com/notifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Key ${ONESIGNAL_REST_API_KEY}`
             },
-            data: {
-                click_action: 'FLUTTER_NOTIFICATION_CLICK',
-                url: '/',
-                timestamp: new Date().toISOString(),
-                ...data
-            },
-            android: {
-                priority: 'high',
-                notification: {
-                    channelId: 'default',
-                    sound: 'default',
-                    priority: 'high',
-                    icon: 'notification_icon',
-                    color: '#f59e0b'
-                }
-            },
-            webpush: {
-                notification: {
-                    icon: '/icon-192.png',
-                    badge: '/icon-72.png',
-                    vibrate: [200, 100, 200],
-                    requireInteraction: true,
-                    tag: data.type || 'default'
-                },
-                fcmOptions: {
-                    link: '/'
-                }
-            }
-        };
-        
-        // إرسال الإشعار
-        const response = await admin.messaging().send(message);
-        console.log('✅ Notification sent successfully:', response);
-        
-        // حفظ سجل الإشعار في Firestore
-        await admin.firestore()
-            .collection('notifications')
-            .add({
-                userId: userId,
-                title: title,
-                body: body,
-                sentAt: admin.firestore.FieldValue.serverTimestamp(),
-                read: false,
-                type: data.type || 'general',
-                data: data
-            });
-        
-        return response;
-        
+            body: JSON.stringify({
+                app_id: ONESIGNAL_APP_ID,
+                include_subscription_ids: playerIds,
+                headings: { "en": title, "he": title },
+                contents: { "en": message, "he": message },
+                data: data,
+                priority: 10,
+                android_sound: "default",
+                ios_sound: "default"
+            })
+        });
+
+        const result = await response.json();
+        console.log('✅ OneSignal response:', JSON.stringify(result));
+        return result;
     } catch (error) {
         console.error('❌ Error sending notification:', error);
+        throw error;
+    }
+}
+
+/**
+ * Parse date and time strings to Date object
+ * Handles formats like "2025-12-15" and "22:00"
+ */
+function parseAppointmentDateTime(dateStr, timeStr) {
+    try {
+        // dateStr format: "2025-12-15" or "2025-12-15T00:00:00..."
+        // timeStr format: "22:00" or "22:00:00"
         
-        // إذا التوكن غير صالح، احذفه
-        if (error.code === 'messaging/invalid-registration-token' ||
-            error.code === 'messaging/registration-token-not-registered') {
-            await admin.firestore()
-                .collection('users')
-                .doc(userId)
-                .update({ 
-                    fcmToken: null,
-                    fcmTokenInvalidated: admin.firestore.FieldValue.serverTimestamp()
-                });
+        let datePart = dateStr;
+        
+        // If date contains 'T', extract just the date part
+        if (dateStr && dateStr.includes('T')) {
+            datePart = dateStr.split('T')[0];
         }
         
+        // Combine date and time
+        const dateTimeStr = `${datePart}T${timeStr || '00:00'}:00`;
+        const date = new Date(dateTimeStr);
+        
+        console.log(`📅 Parsed date: ${dateStr} ${timeStr} -> ${date.toISOString()}`);
+        
+        return date;
+    } catch (error) {
+        console.error('❌ Error parsing date:', error);
         return null;
     }
 }
 
-// ==========================================
-// 1️⃣ إشعارات المواعيد القادمة (كل ساعة)
-// ==========================================
+/**
+ * Get time difference in hours
+ */
+function getHoursDifference(appointmentDate) {
+    const now = new Date();
+    const diff = appointmentDate.getTime() - now.getTime();
+    return diff / (1000 * 60 * 60); // Convert to hours
+}
 
-exports.checkUpcomingAppointments = functions.pubsub
-    .schedule('every 1 hours')
+/**
+ * Check if reminder was already sent
+ */
+async function wasReminderSent(appointmentId, reminderType) {
+    const reminderDoc = await db.collection('reminders')
+        .doc(`${appointmentId}_${reminderType}`)
+        .get();
+    
+    return reminderDoc.exists;
+}
+
+/**
+ * Mark reminder as sent
+ */
+async function markReminderAsSent(appointmentId, reminderType) {
+    await db.collection('reminders')
+        .doc(`${appointmentId}_${reminderType}`)
+        .set({
+            appointmentId: appointmentId,
+            reminderType: reminderType,
+            sentAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+}
+
+/**
+ * Main Function: Check Appointments and Send Reminders
+ * Runs every hour
+ */
+exports.checkAppointmentReminders = functions
+    .runWith({
+        timeoutSeconds: 540,
+        memory: '256MB'
+    })
+    .pubsub
+    .schedule('every 60 minutes')
     .timeZone('Asia/Jerusalem')
     .onRun(async (context) => {
-        console.log('🔍 Checking upcoming appointments...');
+        console.log('🔍 Starting appointment reminders check...');
+        console.log('⏰ Current time:', new Date().toISOString());
         
-        const now = new Date();
-        const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
-        
-        // جلب المواعيد القادمة في الساعة القادمة
-        const appointmentsSnapshot = await admin.firestore()
-            .collection('appointments')
-            .where('date', '>=', now)
-            .where('date', '<=', oneHourLater)
-            .where('notificationSent', '!=', true)
-            .get();
-        
-        console.log(`📅 Found ${appointmentsSnapshot.size} upcoming appointments`);
-        
-        // إرسال إشعار لكل موعد
-        const promises = appointmentsSnapshot.docs.map(async (doc) => {
-            const appointment = doc.data();
-            const appointmentId = doc.id;
+        try {
+            const now = new Date();
             
-            // الحصول على معلومات السيارة
-            const carDoc = await admin.firestore()
-                .collection('cars')
-                .doc(appointment.carId)
+            // Get today and tomorrow dates in YYYY-MM-DD format
+            const today = now.toISOString().split('T')[0];
+            const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const dayAfterTomorrow = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString().split('T')[0];
+            
+            console.log(`📅 Checking dates: ${today}, ${tomorrow}, ${dayAfterTomorrow}`);
+
+            // Get appointments for today, tomorrow, and day after tomorrow
+            const appointmentsSnapshot = await db.collection('appointments')
+                .where('date', '>=', today)
+                .where('date', '<=', dayAfterTomorrow)
+                .where('status', '==', 'scheduled')
                 .get();
-            
-            if (!carDoc.exists) return;
-            
-            const car = carDoc.data();
-            const carInfo = `${car.manufacturer} ${car.model} (${car.licensePlate})`;
-            
-            // إرسال الإشعار
-            await sendNotification(
-                appointment.userId || car.userId,
-                '⏰ תזכורת: פגישה בעוד שעה',
-                `פגישה עם ${carInfo} בשעה ${appointment.time}`,
-                {
-                    type: 'appointment_reminder',
-                    appointmentId: appointmentId,
-                    carId: appointment.carId
+
+            console.log(`📅 Found ${appointmentsSnapshot.size} scheduled appointments`);
+
+            let remindersSent = 0;
+
+            for (const appointmentDoc of appointmentsSnapshot.docs) {
+                const appointment = appointmentDoc.data();
+                const appointmentId = appointmentDoc.id;
+                
+                console.log(`\n📋 Processing appointment: ${appointmentId}`);
+                console.log(`   Date: ${appointment.date}, Time: ${appointment.time}`);
+                console.log(`   Owner: ${appointment.ownerName}, Plate: ${appointment.plateNumber}`);
+                
+                // Parse the appointment date and time
+                const appointmentDate = parseAppointmentDateTime(appointment.date, appointment.time);
+                
+                if (!appointmentDate || isNaN(appointmentDate.getTime())) {
+                    console.log(`⚠️ Invalid date for appointment ${appointmentId}`);
+                    continue;
                 }
-            );
-            
-            // تحديث أن الإشعار تم إرساله
-            await doc.ref.update({
-                notificationSent: true,
-                notificationSentAt: admin.firestore.FieldValue.serverTimestamp()
-            });
-        });
-        
-        await Promise.all(promises);
-        
-        console.log('✅ Appointment notifications sent');
-        return null;
-    });
 
-// ==========================================
-// 2️⃣ إشعار عند تغيير حالة السيارة
-// ==========================================
+                const hoursDiff = getHoursDifference(appointmentDate);
+                console.log(`⏰ Appointment in ${hoursDiff.toFixed(1)} hours`);
 
-exports.onCarStatusChange = functions.firestore
-    .document('cars/{carId}')
-    .onUpdate(async (change, context) => {
-        const carId = context.params.carId;
-        const oldData = change.before.data();
-        const newData = change.after.data();
-        
-        // تحقق إذا الحالة تغيرت
-        if (oldData.status === newData.status) {
+                // Skip past appointments
+                if (hoursDiff < 0) {
+                    console.log(`⏭️ Skipping past appointment`);
+                    continue;
+                }
+
+                // Get user's OneSignal Player ID
+                const userId = appointment.userId;
+                if (!userId) {
+                    console.log(`⚠️ No userId for appointment ${appointmentId}`);
+                    continue;
+                }
+
+                const userDoc = await db.collection('users').doc(userId).get();
+                
+                if (!userDoc.exists) {
+                    console.log(`⚠️ User ${userId} not found`);
+                    continue;
+                }
+                
+                const userData = userDoc.data();
+                
+                if (!userData.oneSignalPlayerId) {
+                    console.log(`⚠️ No OneSignal Player ID for user ${userId}`);
+                    continue;
+                }
+
+                const playerId = userData.oneSignalPlayerId;
+                console.log(`👤 User Player ID: ${playerId}`);
+
+                // Check if we should send 24-hour reminder (between 23-25 hours)
+                if (hoursDiff >= 23 && hoursDiff <= 25) {
+                    const reminderSent = await wasReminderSent(appointmentId, '24h');
+                    if (!reminderSent) {
+                        console.log(`📤 Sending 24h reminder...`);
+                        
+                        const title = '📅 תזכורת: פגישה מחר';
+                        const message = `היי! יש לך פגישה מחר בשעה ${appointment.time}\n` +
+                                      `רכב: ${appointment.plateNumber || 'לא צוין'}\n` +
+                                      `לקוח: ${appointment.ownerName || 'לא צוין'}`;
+                        
+                        await sendPushNotification([playerId], title, message, {
+                            type: 'appointment_reminder',
+                            appointmentId: appointmentId,
+                            reminderType: '24h'
+                        });
+                        
+                        await markReminderAsSent(appointmentId, '24h');
+                        console.log(`✅ Sent 24h reminder for appointment ${appointmentId}`);
+                        remindersSent++;
+                    } else {
+                        console.log(`⏭️ 24h reminder already sent`);
+                    }
+                }
+
+                // Check if we should send 1-hour reminder (between 0.5-1.5 hours)
+                if (hoursDiff >= 0.5 && hoursDiff <= 1.5) {
+                    const reminderSent = await wasReminderSent(appointmentId, '1h');
+                    if (!reminderSent) {
+                        console.log(`📤 Sending 1h reminder...`);
+                        
+                        const title = '⏰ תזכורת: פגישה בעוד שעה!';
+                        const message = `הפגישה מתקרבת! בשעה ${appointment.time}\n` +
+                                      `רכב: ${appointment.plateNumber || 'לא צוין'}\n` +
+                                      `לקוח: ${appointment.ownerName || 'לא צוין'}`;
+                        
+                        await sendPushNotification([playerId], title, message, {
+                            type: 'appointment_reminder',
+                            appointmentId: appointmentId,
+                            reminderType: '1h'
+                        });
+                        
+                        await markReminderAsSent(appointmentId, '1h');
+                        console.log(`✅ Sent 1h reminder for appointment ${appointmentId}`);
+                        remindersSent++;
+                    } else {
+                        console.log(`⏭️ 1h reminder already sent`);
+                    }
+                }
+            }
+
+            console.log(`\n✅ Appointment reminders check completed. Sent ${remindersSent} reminders.`);
             return null;
+        } catch (error) {
+            console.error('❌ Error in checkAppointmentReminders:', error);
+            throw error;
         }
-        
-        console.log(`🚗 Car status changed: ${oldData.status} → ${newData.status}`);
-        
-        // رسائل الإشعارات حسب الحالة
-        const statusMessages = {
-            'waiting': {
-                icon: '⏳',
-                title: 'הרכב ממתין',
-                body: 'הרכב שלך ממתין לטיפול'
-            },
-            'in-progress': {
-                icon: '🔧',
-                title: 'הטיפול ברכב החל',
-                body: 'אנחנו עובדים על הרכב שלך'
-            },
-            'done': {
-                icon: '✅',
-                title: 'הטיפול ברכב הושלם',
-                body: 'הרכב שלך מוכן לאיסוף!'
-            },
-            'delivered': {
-                icon: '🎉',
-                title: 'הרכב נמסר',
-                body: 'תודה שבחרת בנו!'
-            }
-        };
-        
-        const statusInfo = statusMessages[newData.status] || {
-            icon: '📝',
-            title: 'עדכון סטטוס רכב',
-            body: `הסטטוס שונה ל: ${newData.status}`
-        };
-        
-        const carInfo = `${newData.manufacturer} ${newData.model} (${newData.licensePlate})`;
-        const title = `${statusInfo.icon} ${statusInfo.title}`;
-        const body = `${carInfo} - ${statusInfo.body}`;
-        
-        // إرسال الإشعار
-        await sendNotification(
-            newData.userId,
-            title,
-            body,
-            {
-                type: 'car_status_change',
-                carId: carId,
-                oldStatus: oldData.status,
-                newStatus: newData.status
-            }
-        );
-        
-        return null;
     });
 
-// ==========================================
-// 3️⃣ فحص الفواتير غير المدفوعة (يومياً)
-// ==========================================
-
-exports.checkUnpaidInvoices = functions.pubsub
-    .schedule('every day 09:00')
+/**
+ * Cleanup old reminders (older than 30 days)
+ * Runs daily at 2 AM
+ */
+exports.cleanupOldReminders = functions
+    .runWith({
+        timeoutSeconds: 540,
+        memory: '256MB'
+    })
+    .pubsub
+    .schedule('0 2 * * *')
     .timeZone('Asia/Jerusalem')
     .onRun(async (context) => {
-        console.log('💰 Checking unpaid invoices...');
+        console.log('🧹 Starting cleanup of old reminders...');
         
-        const threeDaysAgo = new Date();
-        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-        
-        // جلب السيارات مع فواتير غير مدفوعة
-        const carsSnapshot = await admin.firestore()
-            .collection('cars')
-            .where('paymentStatus', '==', 'unpaid')
-            .where('updatedAt', '<=', admin.firestore.Timestamp.fromDate(threeDaysAgo))
-            .get();
-        
-        console.log(`💳 Found ${carsSnapshot.size} unpaid invoices`);
-        
-        // إرسال تذكير لكل فاتورة
-        const promises = carsSnapshot.docs.map(async (doc) => {
-            const car = doc.data();
-            const carId = doc.id;
-            
-            const carInfo = `${car.manufacturer} ${car.model} (${car.licensePlate})`;
-            
-            await sendNotification(
-                car.userId,
-                '💰 תזכורת: חשבונית ממתינה',
-                `חשבונית עבור ${carInfo} ממתינה לתשלום`,
-                {
-                    type: 'unpaid_invoice',
-                    carId: carId,
-                    amount: car.totalCost || 0
-                }
-            );
-        });
-        
-        await Promise.all(promises);
-        
-        console.log('✅ Unpaid invoice reminders sent');
-        return null;
+        try {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            const oldReminders = await db.collection('reminders')
+                .where('sentAt', '<', admin.firestore.Timestamp.fromDate(thirtyDaysAgo))
+                .get();
+
+            console.log(`Found ${oldReminders.size} old reminders to delete`);
+
+            const batch = db.batch();
+            oldReminders.docs.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+
+            await batch.commit();
+            console.log('✅ Old reminders cleanup completed');
+            return null;
+        } catch (error) {
+            console.error('❌ Error in cleanupOldReminders:', error);
+            throw error;
+        }
     });
 
-// ==========================================
-// 4️⃣ إشعار ترحيبي عند تسجيل مستخدم جديد
-// ==========================================
-
-exports.onNewUserSignup = functions.firestore
-    .document('users/{userId}')
-    .onCreate(async (snap, context) => {
-        const userId = context.params.userId;
-        const userData = snap.data();
-        
-        console.log('👋 New user signed up:', userId, userData.email);
-        
-        // انتظر 3 ثواني للتأكد أن FCM Token تم حفظه
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        // إرسال إشعار ترحيبي
-        await sendNotification(
-            userId,
-            '👋 ברוך הבא ל-DRVN!',
-            'תודה על ההצטרפות. אנחנו כאן לעזור לך לנהל את המוסך שלך בצורה מקצועית ויעילה',
-            {
-                type: 'welcome'
-            }
-        );
-        
-        return null;
-    });
-
-// ==========================================
-// 5️⃣ إرسال إشعار يدوي (من Admin Panel)
-// ==========================================
-
-exports.sendManualNotification = functions.https.onCall(async (data, context) => {
-    // التحقق من تسجيل الدخول
+/**
+ * Manual Test Function - Send test notification
+ */
+exports.sendTestReminder = functions.https.onCall(async (data, context) => {
+    // Require authentication
     if (!context.auth) {
         throw new functions.https.HttpsError(
             'unauthenticated',
-            'Must be authenticated'
+            'User must be authenticated'
         );
     }
+
+    const userId = context.auth.uid;
     
-    const { userId, title, body, extraData } = data;
-    
-    if (!userId || !title || !body) {
-        throw new functions.https.HttpsError(
-            'invalid-argument',
-            'Missing required fields: userId, title, body'
-        );
-    }
-    
-    const result = await sendNotification(
-        userId, 
-        title, 
-        body, 
-        { 
-            type: 'manual',
-            sentBy: context.auth.uid,
-            ...extraData 
+    try {
+        // Get user's OneSignal Player ID
+        const userDoc = await db.collection('users').doc(userId).get();
+        const userData = userDoc.data();
+        
+        if (!userData || !userData.oneSignalPlayerId) {
+            throw new functions.https.HttpsError(
+                'not-found',
+                'OneSignal Player ID not found for user'
+            );
         }
-    );
-    
-    if (result) {
-        return { success: true, messageId: result };
-    } else {
-        throw new functions.https.HttpsError(
-            'internal',
-            'Failed to send notification'
-        );
-    }
-});
 
-// ==========================================
-// 6️⃣ تذكير بصيانة دورية (شهرياً)
-// ==========================================
-
-exports.checkMaintenanceReminders = functions.pubsub
-    .schedule('every day 10:00')
-    .timeZone('Asia/Jerusalem')
-    .onRun(async (context) => {
-        console.log('🔧 Checking maintenance reminders...');
+        const playerId = userData.oneSignalPlayerId;
         
-        const oneMonthAgo = new Date();
-        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        // Send test notification
+        const title = '🧪 בדיקה!';
+        const message = 'התראות אוטומטיות עובדות מצוין! ✅';
         
-        // جلب السيارات التي لم تُجرى لها صيانة منذ شهر
-        const carsSnapshot = await admin.firestore()
-            .collection('cars')
-            .where('lastMaintenanceDate', '<=', admin.firestore.Timestamp.fromDate(oneMonthAgo))
-            .get();
-        
-        console.log(`🔧 Found ${carsSnapshot.size} cars needing maintenance`);
-        
-        const promises = carsSnapshot.docs.map(async (doc) => {
-            const car = doc.data();
-            const carId = doc.id;
-            
-            // تحقق إذا تم إرسال تذكير مؤخراً
-            const lastReminder = car.lastMaintenanceReminder?.toDate();
-            if (lastReminder) {
-                const daysSinceReminder = (new Date() - lastReminder) / (1000 * 60 * 60 * 24);
-                if (daysSinceReminder < 7) {
-                    return; // لا ترسل تذكير إذا تم إرسال واحد في آخر 7 أيام
-                }
-            }
-            
-            const carInfo = `${car.manufacturer} ${car.model} (${car.licensePlate})`;
-            
-            await sendNotification(
-                car.userId,
-                '🔧 הגיע הזמן לטיפול תקופתי',
-                `${carInfo} - לא בוצע טיפול מזה חודש. מומלץ לתאם פגישה`,
-                {
-                    type: 'maintenance_reminder',
-                    carId: carId
-                }
-            );
-            
-            // تحديث تاريخ آخر تذكير
-            await doc.ref.update({
-                lastMaintenanceReminder: admin.firestore.FieldValue.serverTimestamp()
-            });
+        await sendPushNotification([playerId], title, message, {
+            type: 'test'
         });
-        
-        await Promise.all(promises);
-        
-        console.log('✅ Maintenance reminders sent');
-        return null;
-    });
 
-// ==========================================
-// 7️⃣ تذكير بانتهاء صلاحية الاشتراك
-// ==========================================
-
-exports.checkSubscriptionExpiry = functions.pubsub
-    .schedule('every day 08:00')
-    .timeZone('Asia/Jerusalem')
-    .onRun(async (context) => {
-        console.log('⚠️ Checking subscription expiry...');
-        
-        const now = new Date();
-        const sevenDaysLater = new Date();
-        sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
-        
-        const threeDaysLater = new Date();
-        threeDaysLater.setDate(threeDaysLater.getDate() + 3);
-        
-        // جلب المستخدمين الذين ينتهي اشتراكهم قريباً
-        const usersSnapshot = await admin.firestore()
-            .collection('users')
-            .where('subscriptionEndDate', '<=', admin.firestore.Timestamp.fromDate(sevenDaysLater))
-            .get();
-        
-        console.log(`⏰ Found ${usersSnapshot.size} users with expiring subscriptions`);
-        
-        const promises = usersSnapshot.docs.map(async (doc) => {
-            const user = doc.data();
-            const userId = doc.id;
-            
-            const endDate = user.subscriptionEndDate.toDate();
-            const daysLeft = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
-            
-            let title, body, reminderType;
-            
-            if (daysLeft <= 0) {
-                // انتهى الاشتراك
-                title = '❌ המנוי פג תוקף';
-                body = 'המנוי שלך פג תוקף. חדש אותו כדי להמשיך להשתמש במערכת';
-                reminderType = 'expired';
-            } else if (daysLeft <= 1) {
-                // يوم واحد متبقي
-                title = '⚠️ המנוי מסתיים מחר!';
-                body = 'המנוי שלך מסתיים מחר. חדש אותו עכשיו';
-                reminderType = '1_day';
-            } else if (daysLeft <= 3) {
-                // 3 أيام متبقية
-                title = '⚠️ המנוי מסתיים בעוד 3 ימים';
-                body = `המנוי שלך מסתיים בעוד ${daysLeft} ימים. חדש אותו כדי להמשיך`;
-                reminderType = '3_days';
-            } else if (daysLeft <= 7) {
-                // 7 أيام متبقية
-                title = '⏰ המנוי מסתיים בעוד שבוע';
-                body = `המנוי שלך מסתיים בעוד ${daysLeft} ימים. אל תשכח לחדש`;
-                reminderType = '7_days';
-            } else {
-                return; // لا ترسل إشعار
-            }
-            
-            // تحقق إذا تم إرسال هذا النوع من التذكير
-            const lastReminder = user[`subscriptionReminder_${reminderType}`];
-            if (lastReminder) {
-                return; // تم إرسال هذا التذكير من قبل
-            }
-            
-            await sendNotification(
-                userId,
-                title,
-                body,
-                {
-                    type: 'subscription_expiry',
-                    daysLeft: daysLeft,
-                    reminderType: reminderType
-                }
-            );
-            
-            // تحديث أن التذكير تم إرساله
-            await doc.ref.update({
-                [`subscriptionReminder_${reminderType}`]: admin.firestore.FieldValue.serverTimestamp()
-            });
-        });
-        
-        await Promise.all(promises);
-        
-        console.log('✅ Subscription expiry reminders sent');
-        return null;
-    });
-
-// ==========================================
-// 8️⃣ إشعار عند إضافة سيارة جديدة
-// ==========================================
-
-exports.onNewCarAdded = functions.firestore
-    .document('cars/{carId}')
-    .onCreate(async (snap, context) => {
-        const carId = context.params.carId;
-        const car = snap.data();
-        
-        console.log('🆕 New car added:', carId);
-        
-        const carInfo = `${car.manufacturer} ${car.model} (${car.licensePlate})`;
-        
-        // إرسال إشعار تأكيد
-        await sendNotification(
-            car.userId,
-            '✅ רכב נוסף בהצלחה',
-            `${carInfo} נוסף למערכת שלך`,
-            {
-                type: 'new_car',
-                carId: carId
-            }
-        );
-        
-        return null;
-    });
-
-// ==========================================
-// 🆕 إضافي: إشعار عند حذف موعد
-// ==========================================
-
-exports.onAppointmentCancelled = functions.firestore
-    .document('appointments/{appointmentId}')
-    .onDelete(async (snap, context) => {
-        const appointment = snap.data();
-        
-        // الحصول على معلومات السيارة
-        const carDoc = await admin.firestore()
-            .collection('cars')
-            .doc(appointment.carId)
-            .get();
-        
-        if (!carDoc.exists) return null;
-        
-        const car = carDoc.data();
-        const carInfo = `${car.manufacturer} ${car.model}`;
-        
-        await sendNotification(
-            appointment.userId || car.userId,
-            '❌ פגישה בוטלה',
-            `הפגישה עבור ${carInfo} בוטלה`,
-            {
-                type: 'appointment_cancelled',
-                carId: appointment.carId
-            }
-        );
-        
-        return null;
-    });
-
-// ==========================================
-// 🆕 إضافي: إحصائيات الإشعارات
-// ==========================================
-
-exports.getNotificationStats = functions.https.onCall(async (data, context) => {
-    if (!context.auth) {
-        throw new functions.https.HttpsError('unauthenticated', 'Must be authenticated');
+        return { success: true, message: 'Test notification sent!' };
+    } catch (error) {
+        console.error('Error in sendTestReminder:', error);
+        throw new functions.https.HttpsError('internal', error.message);
     }
-    
-    const userId = data.userId || context.auth.uid;
-    
-    const notificationsSnapshot = await admin.firestore()
-        .collection('notifications')
-        .where('userId', '==', userId)
-        .orderBy('sentAt', 'desc')
-        .limit(50)
-        .get();
-    
-    const notifications = notificationsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        sentAt: doc.data().sentAt?.toDate()?.toISOString()
-    }));
-    
-    const stats = {
-        total: notifications.length,
-        unread: notifications.filter(n => !n.read).length,
-        byType: {}
-    };
-    
-    notifications.forEach(n => {
-        stats.byType[n.type] = (stats.byType[n.type] || 0) + 1;
-    });
-    
-    return {
-        notifications: notifications,
-        stats: stats
-    };
-});
-
-// ==========================================
-// 🆕 إضافي: تعليم الإشعار كمقروء
-// ==========================================
-
-exports.markNotificationAsRead = functions.https.onCall(async (data, context) => {
-    if (!context.auth) {
-        throw new functions.https.HttpsError('unauthenticated', 'Must be authenticated');
-    }
-    
-    const { notificationId } = data;
-    
-    if (!notificationId) {
-        throw new functions.https.HttpsError('invalid-argument', 'Missing notificationId');
-    }
-    
-    await admin.firestore()
-        .collection('notifications')
-        .doc(notificationId)
-        .update({
-            read: true,
-            readAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-    
-    return { success: true };
 });
