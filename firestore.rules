@@ -1,0 +1,228 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ==========================================
+    // HELPER FUNCTIONS
+    // ==========================================
+
+    function isAdmin() {
+      return request.auth != null &&
+        (request.auth.token.email == 'admin@drvn.com' ||
+         request.auth.token.email == 'h-26-7@hotmail.com');
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Validate string field
+    function isValidString(field, maxLength) {
+      return field is string && field.size() <= maxLength;
+    }
+
+    // Validate phone number format (Israeli)
+    function isValidPhone(phone) {
+      return phone == null || phone == '' || (phone is string && phone.size() <= 15);
+    }
+
+    // Validate plate number
+    function isValidPlateNumber(plate) {
+      return plate is string && plate.size() >= 7 && plate.size() <= 10;
+    }
+
+    // Rate limiting - max documents per user
+    function userDocumentCount(collection) {
+      return exists(/databases/$(database)/documents/$(collection)/$(request.auth.uid));
+    }
+
+    // ==========================================
+    // USERS COLLECTION
+    // ==========================================
+    match /users/{userId} {
+      allow read: if isSignedIn() && (isAdmin() || isOwner(userId));
+
+      allow create: if isSignedIn() && isOwner(userId) &&
+        request.resource.data.userId == userId &&
+        request.resource.data.keys().hasAll(['email', 'userId']) &&
+        isValidString(request.resource.data.email, 100);
+
+      // Users cannot modify subscription fields themselves
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['subscriptionStatus', 'subscriptionEndDate', 'lastPaymentDate', 'isPaid', 'subscriptionExpiry', 'isAdmin']))
+      );
+
+      allow delete: if isSignedIn() && (isAdmin() || isOwner(userId));
+    }
+
+    // ==========================================
+    // PAYMENTS COLLECTION
+    // ==========================================
+    match /payments/{paymentId} {
+      allow read: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.keys().hasAll(['userId', 'amount', 'createdAt']);
+
+      // Only admin can modify payments
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================
+    // CARS COLLECTION
+    // ==========================================
+    match /cars/{carId} {
+      allow read: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.keys().hasAll(['userId', 'plateNumber']);
+
+      allow update: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid) &&
+        // Cannot change userId
+        request.resource.data.userId == resource.data.userId;
+
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+    }
+
+    // ==========================================
+    // MAINTENANCE COLLECTION
+    // ==========================================
+    match /maintenance/{maintenanceId} {
+      // Read: user can read their own OR if they own the car
+      allow read: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.userId == request.auth.uid
+      );
+
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.keys().hasAll(['userId', 'carId', 'date']) &&
+        isValidString(request.resource.data.get('workDescription', ''), 2000);
+
+      allow update: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid) &&
+        request.resource.data.userId == resource.data.userId;
+
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+    }
+
+    // ==========================================
+    // APPOINTMENTS COLLECTION
+    // ==========================================
+    match /appointments/{appointmentId} {
+      allow read: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.keys().hasAll(['userId', 'date']);
+
+      allow update: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid) &&
+        request.resource.data.userId == resource.data.userId;
+
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+    }
+
+    // ==========================================
+    // DASHBOARD COLLECTION
+    // ==========================================
+    match /dashboard/{dashboardId} {
+      allow read: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid;
+
+      allow update: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid) &&
+        request.resource.data.userId == resource.data.userId;
+
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+    }
+
+    // ==========================================
+    // SETTINGS COLLECTION
+    // ==========================================
+    match /settings/{userId} {
+      allow read: if isSignedIn() && (isAdmin() || isOwner(userId));
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && (isAdmin() || isOwner(userId));
+      allow delete: if isSignedIn() && (isAdmin() || isOwner(userId));
+    }
+
+    // ==========================================
+    // SPARE PARTS CONTACTS (Shared between users)
+    // ==========================================
+    match /sparePartsContacts/{contactId} {
+      // Everyone can read contacts
+      allow read: if isSignedIn();
+
+      // Only create with valid data
+      allow create: if isSignedIn() &&
+        request.resource.data.keys().hasAll(['name', 'phone']) &&
+        isValidString(request.resource.data.name, 100) &&
+        isValidPhone(request.resource.data.phone);
+
+      // Creator or admin can update/delete
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.get('createdBy', '') == request.auth.uid
+      );
+
+      allow delete: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.get('createdBy', '') == request.auth.uid
+      );
+    }
+
+    // ==========================================
+    // CLOUD BACKUPS
+    // ==========================================
+    match /cloudBackups/{backupId} {
+      allow read: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.keys().hasAll(['userId', 'createdAt']);
+
+      allow update: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid) &&
+        request.resource.data.userId == resource.data.userId;
+
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+    }
+
+    // ==========================================
+    // REMINDERS (for Cloud Functions)
+    // ==========================================
+    match /reminders/{reminderId} {
+      allow read: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid;
+
+      allow update: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+    }
+
+    // ==========================================
+    // SUBSCRIPTIONS (PayPal webhooks)
+    // ==========================================
+    match /subscriptions/{subscriptionId} {
+      allow read: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      // Only Cloud Functions/Admin can write
+      allow write: if isAdmin();
+    }
+
+    // ==========================================
+    // DENY ALL OTHER COLLECTIONS
+    // ==========================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

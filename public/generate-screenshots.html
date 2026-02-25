@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DRVN - App Store Screenshot Generator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #111; color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; }
+
+        .toolbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+            background: #1a1a2e; padding: 10px 20px;
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            border-bottom: 2px solid #f59e0b;
+        }
+        .toolbar-title { font-weight: 800; color: #f59e0b; font-size: 15px; margin-left: 12px; }
+        .btn {
+            padding: 6px 12px; border-radius: 7px; border: 2px solid transparent;
+            background: rgba(255,255,255,0.1); color: white; cursor: pointer;
+            font-size: 12px; font-weight: 600;
+        }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn.active { border-color: #f59e0b; background: rgba(245,158,11,0.25); color: #f59e0b; }
+        .btn-dl {
+            padding: 7px 18px; border-radius: 7px; border: none;
+            background: linear-gradient(135deg, #f59e0b, #d97706); color: black;
+            cursor: pointer; font-size: 13px; font-weight: 700; margin-right: auto;
+        }
+        .btn-dl:hover { transform: scale(1.03); }
+        .btn-dl-all {
+            padding: 7px 18px; border-radius: 7px; border: 2px solid #f59e0b;
+            background: transparent; color: #f59e0b; cursor: pointer;
+            font-size: 13px; font-weight: 700;
+        }
+        .size-label { color: #9ca3af; font-size: 11px; }
+        .canvas-area { margin-top: 60px; display: flex; justify-content: center; padding: 20px; }
+        #screenshotFrame { overflow: hidden; position: relative; }
+        .loading-overlay {
+            display: none; position: fixed; top:0; left:0; right:0; bottom:0;
+            background: rgba(0,0,0,0.8); z-index: 99999;
+            align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+        }
+        .loading-overlay.show { display: flex; }
+        .loading-spinner { width:44px; height:44px; border:4px solid rgba(245,158,11,0.3); border-top-color:#f59e0b; border-radius:50%; animation:spin .8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <span class="toolbar-title">📱 DRVN Screenshots</span>
+        <div style="display:flex; gap:5px;">
+            <button class="btn active" onclick="setDevice('iphone67')" id="d-iphone67">iPhone 6.7"</button>
+            <button class="btn" onclick="setDevice('iphone65')" id="d-iphone65">iPhone 6.5"</button>
+            <button class="btn" onclick="setDevice('ipad')" id="d-ipad">iPad 12.9"</button>
+            <button class="btn" onclick="setDevice('watch')" id="d-watch">Watch</button>
+        </div>
+        <div style="width:1px; height:22px; background:rgba(255,255,255,0.2);"></div>
+        <div style="display:flex; gap:5px;" id="screenBtns">
+            <button class="btn active" onclick="setScreen('calendar')" id="s-calendar">Calendar</button>
+            <button class="btn" onclick="setScreen('cardetails')" id="s-cardetails">Car Details</button>
+            <button class="btn" onclick="setScreen('backup')" id="s-backup">Backup</button>
+            <button class="btn" onclick="setScreen('dashboard')" id="s-dashboard">Dashboard</button>
+        </div>
+        <span class="size-label" id="sizeLabel">1290 × 2796</span>
+        <button class="btn-dl" onclick="downloadCurrent()">⬇️ Download PNG</button>
+        <button class="btn-dl-all" onclick="downloadAll()">📦 Download All</button>
+    </div>
+
+    <div class="canvas-area"><div id="screenshotFrame"></div></div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div style="color:#f59e0b; font-weight:600;">Generating...</div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+    var currentDevice = 'iphone67';
+    var currentScreen = 'calendar';
+
+    var devices = {
+        iphone67: { w: 1290, h: 2796 },
+        iphone65: { w: 1242, h: 2688 },
+        ipad:     { w: 2048, h: 2732 },
+        watch:    { w: 396,  h: 484  }
+    };
+
+    function setDevice(d) {
+        currentDevice = d;
+        document.querySelectorAll('[id^="d-"]').forEach(function(b){b.classList.remove('active')});
+        document.getElementById('d-'+d).classList.add('active');
+        var dev = devices[d];
+        document.getElementById('sizeLabel').textContent = dev.w+' × '+dev.h;
+        render();
+    }
+    function setScreen(s) {
+        currentScreen = s;
+        document.querySelectorAll('[id^="s-"]').forEach(function(b){b.classList.remove('active')});
+        document.getElementById('s-'+s).classList.add('active');
+        render();
+    }
+
+    function render() {
+        var dev = devices[currentDevice];
+        var frame = document.getElementById('screenshotFrame');
+        frame.style.width = dev.w+'px';
+        frame.style.height = dev.h+'px';
+        frame.style.overflow = 'hidden';
+        frame.style.borderRadius = currentDevice === 'watch' ? '80px' : '0';
+
+        var isWatch = currentDevice === 'watch';
+        var isIPad = currentDevice === 'ipad';
+        var s = dev.w / 1290;
+
+        var html = '';
+        if (isWatch) {
+            html = currentScreen === 'calendar' ? watchCalendar(dev) : watchHome(dev);
+        } else if (isIPad) {
+            html = ipadRender(s, dev);
+        } else {
+            html = phoneRender(s, dev);
+        }
+        frame.innerHTML = html;
+    }
+
+    // Helpers
+    function P(base, s) { return Math.round(base * s) + 'px'; }
+    function F(base, s) { return Math.round(base * s) + 'px'; }
+
+    // ======================================
+    // PHONE RENDERS - Matching real app
+    // ======================================
+    function phoneRender(s, dev) {
+        if (currentScreen === 'calendar') return phoneCalendar(s, dev);
+        if (currentScreen === 'cardetails') return phoneCarDetails(s, dev);
+        if (currentScreen === 'backup') return phoneBackup(s, dev);
+        if (currentScreen === 'dashboard') return phoneDashboard(s, dev);
+        return phoneCalendar(s, dev);
+    }
+
+    // --- SCREEN 1: CALENDAR (matches real app) ---
+    function phoneCalendar(s, dev) {
+        var dayNames = ['ש','ו','ה','ד','ג','ב','א'];
+
+        var dayH = '';
+        for (var i = 0; i < dayNames.length; i++) {
+            dayH += '<div style="text-align:center; font-size:'+F(28,s)+'; color:#6b7280; font-weight:600;">'+dayNames[i]+'</div>';
+        }
+
+        // Feb 2026 starts on Sunday (day index 0)
+        var calCells = '';
+        for (var d = 1; d <= 28; d++) {
+            var isToday = d === 19;
+            var hasEvt = [5,12,15,19,22,25].indexOf(d) >= 0;
+            var cellBg = isToday ? 'background:#f59e0b; color:white; font-weight:700;' : 'color:#1f2937;';
+            var dot = hasEvt && !isToday ? '<div style="width:'+P(10,s)+'; height:'+P(10,s)+'; background:#ef4444; border-radius:50%; margin:'+P(4,s)+' auto 0;"></div>' : '';
+            calCells += '<div style="text-align:center; padding:'+P(16,s)+' 0; border-radius:'+P(14,s)+'; font-size:'+F(32,s)+'; '+cellBg+'">'+d+dot+'</div>';
+        }
+
+        return '<div style="width:100%; height:100%; display:flex; flex-direction:column; background:#f3f4f6; font-family:-apple-system,BlinkMacSystemFont,sans-serif; direction:rtl;">' +
+            // Status bar
+            '<div style="height:'+P(90,s)+'; background:linear-gradient(135deg,#f59e0b,#d97706);"></div>' +
+            // Header
+            '<div style="background:linear-gradient(135deg,#f59e0b,#d97706); padding:'+P(8,s)+' '+P(40,s)+' '+P(36,s)+';">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                    '<span style="font-size:'+F(44,s)+'; color:white;">☰</span>' +
+                    '<span style="font-size:'+F(46,s)+'; font-weight:800; color:white; letter-spacing:2px;">DRVN</span>' +
+                    '<div style="display:flex; gap:'+P(16,s)+';">' +
+                        '<span style="font-size:'+F(40,s)+'; color:white;">🔔</span>' +
+                        '<span style="font-size:'+F(40,s)+'; color:white;">🌙</span>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+
+            // Calendar card
+            '<div style="background:white; border-radius:'+P(24,s)+'; margin:'+P(20,s)+' '+P(32,s)+'; padding:'+P(28,s)+'; box-shadow:0 2px 12px rgba(0,0,0,0.06);">' +
+                // Month nav
+                '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:'+P(20,s)+';">' +
+                    '<div style="width:'+P(72,s)+'; height:'+P(72,s)+'; background:#f3f4f6; border-radius:'+P(14,s)+'; display:flex; align-items:center; justify-content:center; font-size:'+F(32,s)+'; color:#6b7280;">→</div>' +
+                    '<span style="font-size:'+F(36,s)+'; font-weight:700; color:#1f2937;">פברואר 2026</span>' +
+                    '<div style="width:'+P(72,s)+'; height:'+P(72,s)+'; background:#f3f4f6; border-radius:'+P(14,s)+'; display:flex; align-items:center; justify-content:center; font-size:'+F(32,s)+'; color:#6b7280;">←</div>' +
+                '</div>' +
+                // Day headers
+                '<div style="display:grid; grid-template-columns:repeat(7,1fr); gap:'+P(4,s)+'; margin-bottom:'+P(8,s)+';">' + dayH + '</div>' +
+                // Days grid
+                '<div style="display:grid; grid-template-columns:repeat(7,1fr); gap:'+P(4,s)+';">' + calCells + '</div>' +
+            '</div>' +
+
+            // Section title
+            '<div style="padding:'+P(16,s)+' '+P(40,s)+' '+P(8,s)+';">' +
+                '<span style="font-size:'+F(34,s)+'; font-weight:700; color:#1f2937;">📋 פגישות היום</span>' +
+            '</div>' +
+
+            // Appointment cards
+            aptCardReal(s, '09:00', 'טויוטה קורולה', 'החלפת שמן ופילטר', '12-345-67', '#f59e0b', '#fef3c7') +
+            aptCardReal(s, '11:30', 'הונדה סיוויק', 'בדיקת בלמים', '98-765-43', '#3b82f6', '#dbeafe') +
+            aptCardReal(s, '14:00', 'מאזדה 3', 'טיפול 30,000 ק"מ', '55-123-88', '#10b981', '#dcfce7') +
+            aptCardReal(s, '16:00', 'סקודה אוקטביה', 'החלפת צמיגים', '33-222-11', '#8b5cf6', '#ede9fe') +
+
+            // Bottom nav
+            bottomNav(s, 'calendar') +
+        '</div>';
+    }
+
+    function aptCardReal(s, time, car, desc, plate, accentColor, bgColor) {
+        return '<div style="background:white; border-radius:'+P(20,s)+'; padding:'+P(22,s)+' '+P(26,s)+'; margin:'+P(8,s)+' '+P(32,s)+'; box-shadow:0 1px 6px rgba(0,0,0,0.05); display:flex; align-items:center; gap:'+P(18,s)+'; direction:rtl; border-right:'+P(8,s)+' solid '+accentColor+';">' +
+            '<div style="background:'+bgColor+'; color:'+accentColor+'; padding:'+P(12,s)+' '+P(18,s)+'; border-radius:'+P(12,s)+'; font-weight:800; font-size:'+F(28,s)+'; white-space:nowrap;">'+time+'</div>' +
+            '<div style="flex:1;">' +
+                '<div style="font-size:'+F(28,s)+'; font-weight:700; color:#1f2937;">'+car+'</div>' +
+                '<div style="font-size:'+F(24,s)+'; color:#6b7280; margin-top:'+P(4,s)+';">'+desc+'</div>' +
+                '<div style="font-size:'+F(22,s)+'; color:#9ca3af; margin-top:'+P(2,s)+';">'+plate+'</div>' +
+            '</div>' +
+            '<div style="font-size:'+F(32,s)+'; color:#d1d5db;">←</div>' +
+        '</div>';
+    }
+
+    // --- SCREEN 2: CAR DETAILS (matches real app) ---
+    function phoneCarDetails(s, dev) {
+        return '<div style="width:100%; height:100%; display:flex; flex-direction:column; background:#f3f4f6; font-family:-apple-system,BlinkMacSystemFont,sans-serif; direction:rtl;">' +
+            // Status bar
+            '<div style="height:'+P(90,s)+'; background:linear-gradient(135deg,#f59e0b,#d97706);"></div>' +
+            // Header
+            '<div style="background:linear-gradient(135deg,#f59e0b,#d97706); padding:'+P(8,s)+' '+P(40,s)+' '+P(36,s)+';">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                    '<span style="font-size:'+F(44,s)+'; color:white;">←</span>' +
+                    '<span style="font-size:'+F(42,s)+'; font-weight:800; color:white;">פרטי רכב</span>' +
+                    '<span style="font-size:'+F(40,s)+'; color:white;">✏️</span>' +
+                '</div>' +
+            '</div>' +
+
+            // Car image placeholder
+            '<div style="margin:'+P(20,s)+' '+P(32,s)+' 0; height:'+P(480,s)+'; background:linear-gradient(135deg,#e5e7eb,#d1d5db); border-radius:'+P(24,s)+'; display:flex; align-items:center; justify-content:center; overflow:hidden;">' +
+                '<div style="text-align:center;">' +
+                    '<div style="font-size:'+F(120,s)+'; margin-bottom:'+P(12,s)+';">🚗</div>' +
+                    '<div style="font-size:'+F(28,s)+'; color:#6b7280;">תמונת הרכב</div>' +
+                '</div>' +
+            '</div>' +
+
+            // Car info card
+            '<div style="background:white; border-radius:'+P(24,s)+'; margin:'+P(16,s)+' '+P(32,s)+'; padding:'+P(28,s)+'; box-shadow:0 2px 12px rgba(0,0,0,0.06);">' +
+                // Plate + Status
+                '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:'+P(18,s)+';">' +
+                    '<div style="background:#fef3c7; padding:'+P(10,s)+' '+P(24,s)+'; border-radius:'+P(12,s)+';">' +
+                        '<span style="font-weight:800; font-size:'+F(36,s)+'; color:#92400e; letter-spacing:2px;">12-345-67</span>' +
+                    '</div>' +
+                    '<div style="background:#dbeafe; padding:'+P(8,s)+' '+P(18,s)+'; border-radius:'+P(20,s)+';">' +
+                        '<span style="font-size:'+F(24,s)+'; font-weight:600; color:#1e40af;">🔵 בטיפול</span>' +
+                    '</div>' +
+                '</div>' +
+                // Details grid
+                '<div style="display:grid; grid-template-columns:1fr 1fr; gap:'+P(16,s)+';">' +
+                    detailItem(s, '👤', 'בעלים', 'יוסף כהן') +
+                    detailItem(s, '🚗', 'רכב', 'טויוטה קורולה') +
+                    detailItem(s, '📅', 'שנה', '2022') +
+                    detailItem(s, '🎨', 'צבע', 'לבן') +
+                    detailItem(s, '📞', 'טלפון', '050-1234567') +
+                    detailItem(s, '🔧', 'ק"מ', '45,230') +
+                '</div>' +
+            '</div>' +
+
+            // Action buttons
+            '<div style="padding:'+P(8,s)+' '+P(32,s)+'; display:flex; flex-direction:column; gap:'+P(14,s)+';">' +
+                actionBtn(s, '+ הוסף טיפול', '#10b981', '#065f46', '🔧') +
+                actionBtn(s, 'שלח WhatsApp', '#22c55e', '#065f46', '📱') +
+                '<div style="display:flex; gap:'+P(14,s)+';">' +
+                    halfBtn(s, 'הדפס דו"ח', '#6b7280', '#e5e7eb', '#374151', '🖨️') +
+                    halfBtn(s, 'שתף', '#8b5cf6', '#ede9fe', '#5b21b6', '🔗') +
+                '</div>' +
+            '</div>' +
+
+            // Maintenance history title
+            '<div style="padding:'+P(20,s)+' '+P(40,s)+' '+P(8,s)+';">' +
+                '<span style="font-size:'+F(34,s)+'; font-weight:700; color:#1f2937;">📋 היסטוריית טיפולים</span>' +
+            '</div>' +
+
+            // Maintenance cards
+            maintenanceCard(s, '15/01/2026', 'החלפת שמן', '₪350', '#10b981') +
+            maintenanceCard(s, '20/11/2025', 'בדיקת בלמים', '₪180', '#3b82f6') +
+            maintenanceCard(s, '05/08/2025', 'טיפול 30,000', '₪1,200', '#f59e0b') +
+
+            // Bottom nav
+            bottomNav(s, 'cars') +
+        '</div>';
+    }
+
+    function detailItem(s, icon, label, value) {
+        return '<div style="background:#f9fafb; border-radius:'+P(14,s)+'; padding:'+P(16,s)+';">' +
+            '<div style="font-size:'+F(22,s)+'; color:#9ca3af; margin-bottom:'+P(4,s)+';">'+icon+' '+label+'</div>' +
+            '<div style="font-size:'+F(28,s)+'; font-weight:600; color:#1f2937;">'+value+'</div>' +
+        '</div>';
+    }
+
+    function actionBtn(s, text, bgColor, textColor, icon) {
+        return '<div style="background:'+bgColor+'; border-radius:'+P(18,s)+'; padding:'+P(26,s)+'; text-align:center; box-shadow:0 4px 15px '+bgColor+'40;">' +
+            '<span style="font-size:'+F(32,s)+'; font-weight:700; color:white;">'+icon+' '+text+'</span>' +
+        '</div>';
+    }
+
+    function halfBtn(s, text, iconColor, bgColor, textColor, icon) {
+        return '<div style="flex:1; background:'+bgColor+'; border-radius:'+P(18,s)+'; padding:'+P(22,s)+'; text-align:center;">' +
+            '<span style="font-size:'+F(28,s)+'; font-weight:600; color:'+textColor+';">'+icon+' '+text+'</span>' +
+        '</div>';
+    }
+
+    function maintenanceCard(s, date, desc, price, color) {
+        return '<div style="background:white; border-radius:'+P(18,s)+'; padding:'+P(22,s)+' '+P(26,s)+'; margin:'+P(8,s)+' '+P(32,s)+'; box-shadow:0 1px 6px rgba(0,0,0,0.04); display:flex; justify-content:space-between; align-items:center; border-right:'+P(6,s)+' solid '+color+';">' +
+            '<div>' +
+                '<div style="font-size:'+F(28,s)+'; font-weight:600; color:#1f2937;">'+desc+'</div>' +
+                '<div style="font-size:'+F(22,s)+'; color:#9ca3af; margin-top:'+P(4,s)+';">'+date+'</div>' +
+            '</div>' +
+            '<div style="background:#f0fdf4; padding:'+P(8,s)+' '+P(18,s)+'; border-radius:'+P(10,s)+';">' +
+                '<span style="font-size:'+F(28,s)+'; font-weight:700; color:'+color+';">'+price+'</span>' +
+            '</div>' +
+        '</div>';
+    }
+
+    // --- SCREEN 3: BACKUP (matches real app - colorful gradient buttons) ---
+    function phoneBackup(s, dev) {
+        return '<div style="width:100%; height:100%; display:flex; flex-direction:column; background:#f3f4f6; font-family:-apple-system,BlinkMacSystemFont,sans-serif; direction:rtl;">' +
+            '<div style="height:'+P(90,s)+'; background:linear-gradient(135deg,#f59e0b,#d97706);"></div>' +
+            '<div style="background:linear-gradient(135deg,#f59e0b,#d97706); padding:'+P(8,s)+' '+P(40,s)+' '+P(36,s)+';">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                    '<span style="font-size:'+F(44,s)+'; color:white;">☰</span>' +
+                    '<span style="font-size:'+F(42,s)+'; font-weight:800; color:white;">גיבוי ושחזור</span>' +
+                    '<span></span>' +
+                '</div>' +
+            '</div>' +
+
+            // Info card
+            '<div style="background:white; border-radius:'+P(24,s)+'; margin:'+P(20,s)+' '+P(32,s)+'; padding:'+P(28,s)+'; box-shadow:0 2px 12px rgba(0,0,0,0.06);">' +
+                '<div style="display:flex; align-items:center; gap:'+P(16,s)+'; margin-bottom:'+P(16,s)+';">' +
+                    '<div style="font-size:'+F(48,s)+';">💾</div>' +
+                    '<div>' +
+                        '<div style="font-size:'+F(30,s)+'; font-weight:700; color:#1f2937;">גיבוי אחרון</div>' +
+                        '<div style="font-size:'+F(24,s)+'; color:#6b7280;">19/02/2026, 14:30</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="display:flex; gap:'+P(12,s)+';">' +
+                    '<div style="flex:1; background:#dcfce7; border-radius:'+P(12,s)+'; padding:'+P(14,s)+'; text-align:center;">' +
+                        '<div style="font-size:'+F(36,s)+'; font-weight:800; color:#166534;">12</div>' +
+                        '<div style="font-size:'+F(20,s)+'; color:#166534;">רכבים</div>' +
+                    '</div>' +
+                    '<div style="flex:1; background:#dbeafe; border-radius:'+P(12,s)+'; padding:'+P(14,s)+'; text-align:center;">' +
+                        '<div style="font-size:'+F(36,s)+'; font-weight:800; color:#1e40af;">28</div>' +
+                        '<div style="font-size:'+F(20,s)+'; color:#1e40af;">טיפולים</div>' +
+                    '</div>' +
+                    '<div style="flex:1; background:#fef3c7; border-radius:'+P(12,s)+'; padding:'+P(14,s)+'; text-align:center;">' +
+                        '<div style="font-size:'+F(36,s)+'; font-weight:800; color:#92400e;">8</div>' +
+                        '<div style="font-size:'+F(20,s)+'; color:#92400e;">תורים</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+
+            // Big action buttons - matching real app gradient style
+            '<div style="padding:'+P(8,s)+' '+P(32,s)+'; display:flex; flex-direction:column; gap:'+P(18,s)+';">' +
+
+                backupBtn(s, '☁️', 'גיבוי לענן', 'שמור את כל הנתונים בענן', 'linear-gradient(135deg, #10b981, #059669)', '#d1fae5') +
+                backupBtn(s, '📥', 'שחזור מענן', 'שחזר נתונים מגיבוי קודם', 'linear-gradient(135deg, #3b82f6, #2563eb)', '#dbeafe') +
+                backupBtn(s, '📁', 'גיבוי עם תמונות', 'גיבוי כולל תמונות הרכבים', 'linear-gradient(135deg, #8b5cf6, #7c3aed)', '#ede9fe') +
+                backupBtn(s, '📄', 'ייצוא CSV', 'ייצא נתונים לאקסל', 'linear-gradient(135deg, #f59e0b, #d97706)', '#fef3c7') +
+
+            '</div>' +
+
+            // Auto backup section
+            '<div style="background:white; border-radius:'+P(24,s)+'; margin:'+P(20,s)+' '+P(32,s)+'; padding:'+P(28,s)+'; box-shadow:0 2px 12px rgba(0,0,0,0.06);">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                    '<div>' +
+                        '<div style="font-size:'+F(30,s)+'; font-weight:700; color:#1f2937;">🔄 גיבוי אוטומטי</div>' +
+                        '<div style="font-size:'+F(24,s)+'; color:#6b7280; margin-top:'+P(6,s)+';">כל 24 שעות</div>' +
+                    '</div>' +
+                    // Toggle switch
+                    '<div style="width:'+P(100,s)+'; height:'+P(56,s)+'; background:#10b981; border-radius:'+P(28,s)+'; position:relative;">' +
+                        '<div style="position:absolute; top:'+P(4,s)+'; left:'+P(4,s)+'; width:'+P(48,s)+'; height:'+P(48,s)+'; background:white; border-radius:50%; box-shadow:0 2px 4px rgba(0,0,0,0.2);"></div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+
+            // Backup history
+            '<div style="padding:'+P(16,s)+' '+P(40,s)+' '+P(8,s)+';">' +
+                '<span style="font-size:'+F(30,s)+'; font-weight:700; color:#1f2937;">📋 היסטוריית גיבויים</span>' +
+            '</div>' +
+            backupHistoryItem(s, '19/02/2026', '14:30', 'גיבוי לענן', '✅', '#10b981') +
+            backupHistoryItem(s, '18/02/2026', '14:30', 'גיבוי אוטומטי', '✅', '#3b82f6') +
+            backupHistoryItem(s, '17/02/2026', '08:15', 'גיבוי עם תמונות', '✅', '#8b5cf6') +
+
+            bottomNav(s, 'settings') +
+        '</div>';
+    }
+
+    function backupBtn(s, icon, title, desc, gradient, lightBg) {
+        return '<div style="background:'+gradient+'; border-radius:'+P(22,s)+'; padding:'+P(30,s)+' '+P(32,s)+'; display:flex; align-items:center; gap:'+P(20,s)+'; box-shadow:0 6px 20px rgba(0,0,0,0.15);">' +
+            '<div style="width:'+P(80,s)+'; height:'+P(80,s)+'; background:rgba(255,255,255,0.2); border-radius:'+P(20,s)+'; display:flex; align-items:center; justify-content:center; font-size:'+F(44,s)+';">'+icon+'</div>' +
+            '<div style="flex:1;">' +
+                '<div style="font-size:'+F(32,s)+'; font-weight:700; color:white;">'+title+'</div>' +
+                '<div style="font-size:'+F(24,s)+'; color:rgba(255,255,255,0.8); margin-top:'+P(4,s)+';">'+desc+'</div>' +
+            '</div>' +
+            '<div style="font-size:'+F(36,s)+'; color:rgba(255,255,255,0.6);">←</div>' +
+        '</div>';
+    }
+
+    function backupHistoryItem(s, date, time, type, status, color) {
+        return '<div style="background:white; border-radius:'+P(16,s)+'; padding:'+P(18,s)+' '+P(24,s)+'; margin:'+P(6,s)+' '+P(32,s)+'; box-shadow:0 1px 4px rgba(0,0,0,0.04); display:flex; justify-content:space-between; align-items:center;">' +
+            '<div>' +
+                '<div style="font-size:'+F(26,s)+'; font-weight:600; color:#1f2937;">'+type+'</div>' +
+                '<div style="font-size:'+F(22,s)+'; color:#9ca3af;">'+date+' '+time+'</div>' +
+            '</div>' +
+            '<span style="font-size:'+F(28,s)+'; color:'+color+';">'+status+'</span>' +
+        '</div>';
+    }
+
+    // --- SCREEN 4: DASHBOARD (matches real app - purple header, kanban) ---
+    function phoneDashboard(s, dev) {
+        return '<div style="width:100%; height:100%; display:flex; flex-direction:column; background:#f3f4f6; font-family:-apple-system,BlinkMacSystemFont,sans-serif; direction:rtl;">' +
+            '<div style="height:'+P(90,s)+'; background:linear-gradient(135deg,#f59e0b,#d97706);"></div>' +
+            '<div style="background:linear-gradient(135deg,#f59e0b,#d97706); padding:'+P(8,s)+' '+P(40,s)+' '+P(36,s)+';">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                    '<span style="font-size:'+F(44,s)+'; color:white;">☰</span>' +
+                    '<span style="font-size:'+F(42,s)+'; font-weight:800; color:white;">לוח בקרה</span>' +
+                    '<span></span>' +
+                '</div>' +
+            '</div>' +
+
+            // Stats cards
+            '<div style="display:flex; gap:'+P(14,s)+'; padding:'+P(20,s)+' '+P(32,s)+' '+P(8,s)+';">' +
+                dashStatCard(s, '12', 'סה"כ', '#f59e0b', '#fffbeb') +
+                dashStatCard(s, '4', 'ממתינים', '#ef4444', '#fef2f2') +
+                dashStatCard(s, '3', 'בטיפול', '#3b82f6', '#eff6ff') +
+                dashStatCard(s, '5', 'הושלמו', '#10b981', '#f0fdf4') +
+            '</div>' +
+
+            // Kanban columns
+            // Waiting (Yellow/Orange)
+            kanbanSection(s, '🟡 ממתינים', '4', '#fef3c7', '#92400e', [
+                {plate:'12-345-67', name:'יוסף כהן', car:'טויוטה קורולה', time:'09:00'},
+                {plate:'44-567-89', name:'מיכל דוד', car:'יונדאי i30', time:'10:30'}
+            ]) +
+
+            // In Progress (Blue)
+            kanbanSection(s, '🔵 בטיפול', '3', '#dbeafe', '#1e40af', [
+                {plate:'98-765-43', name:'דוד לוי', car:'הונדה סיוויק', time:'08:00'},
+                {plate:'33-222-11', name:'אילן גרין', car:'סקודה אוקטביה', time:'11:00'}
+            ]) +
+
+            // Completed (Green)
+            kanbanSection(s, '🟢 הושלמו', '5', '#dcfce7', '#166534', [
+                {plate:'55-123-88', name:'שרה אברהם', car:'מאזדה 3', time:'07:30'},
+                {plate:'77-888-99', name:'רחל כץ', car:'קיא ספורטאז\'', time:'13:00'}
+            ]) +
+
+            bottomNav(s, 'dashboard') +
+        '</div>';
+    }
+
+    function dashStatCard(s, num, label, color, bg) {
+        return '<div style="flex:1; background:'+bg+'; border-radius:'+P(18,s)+'; padding:'+P(18,s)+' '+P(10,s)+'; text-align:center; border-bottom:'+P(6,s)+' solid '+color+';">' +
+            '<div style="font-size:'+F(44,s)+'; font-weight:800; color:'+color+';">'+num+'</div>' +
+            '<div style="font-size:'+F(20,s)+'; color:'+color+'; font-weight:600;">'+label+'</div>' +
+        '</div>';
+    }
+
+    function kanbanSection(s, title, count, bg, titleColor, cards) {
+        var cardsHtml = '';
+        for (var i = 0; i < cards.length; i++) {
+            var c = cards[i];
+            cardsHtml += '<div style="background:white; border-radius:'+P(16,s)+'; padding:'+P(18,s)+'; margin-top:'+P(10,s)+'; box-shadow:0 1px 4px rgba(0,0,0,0.05);">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:'+P(6,s)+';">' +
+                    '<span style="font-size:'+F(28,s)+'; font-weight:700; color:#1f2937;">'+c.plate+'</span>' +
+                    '<span style="font-size:'+F(22,s)+'; color:#9ca3af;">'+c.time+'</span>' +
+                '</div>' +
+                '<div style="font-size:'+F(24,s)+'; color:#374151;">'+c.name+' • '+c.car+'</div>' +
+            '</div>';
+        }
+
+        return '<div style="background:'+bg+'; border-radius:'+P(20,s)+'; padding:'+P(20,s)+'; margin:'+P(10,s)+' '+P(32,s)+';">' +
+            '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                '<span style="font-size:'+F(30,s)+'; font-weight:700; color:'+titleColor+';">'+title+'</span>' +
+                '<span style="background:rgba(0,0,0,0.08); padding:'+P(4,s)+' '+P(14,s)+'; border-radius:'+P(16,s)+'; font-size:'+F(24,s)+'; color:'+titleColor+'; font-weight:600;">'+count+'</span>' +
+            '</div>' +
+            cardsHtml +
+        '</div>';
+    }
+
+    // --- BOTTOM NAV (matches real app) ---
+    function bottomNav(s, active) {
+        var items = [
+            {id:'cars', icon:'🚗', label:'רכבים'},
+            {id:'calendar', icon:'📅', label:'יומן'},
+            {id:'dashboard', icon:'📊', label:'לוח בקרה'},
+            {id:'settings', icon:'⚙️', label:'הגדרות'}
+        ];
+        var html = '<div style="position:absolute; bottom:0; left:0; right:0; background:white; display:flex; justify-content:space-around; padding:'+P(20,s)+' 0 '+P(48,s)+'; border-top:1px solid #e5e7eb; box-shadow:0 -2px 10px rgba(0,0,0,0.03);">';
+        for (var i = 0; i < items.length; i++) {
+            var it = items[i];
+            var isActive = it.id === active;
+            var color = isActive ? '#f59e0b' : '#9ca3af';
+            html += '<div style="display:flex; flex-direction:column; align-items:center; gap:'+P(6,s)+'; position:relative;">';
+            if (isActive) {
+                html += '<div style="position:absolute; top:-'+P(20,s)+'; width:'+P(60,s)+'; height:'+P(6,s)+'; background:#f59e0b; border-radius:'+P(3,s)+';"></div>';
+            }
+            html += '<span style="font-size:'+F(44,s)+';">'+it.icon+'</span>';
+            html += '<span style="font-size:'+F(22,s)+'; color:'+color+'; font-weight:'+(isActive?'700':'400')+';">'+it.label+'</span>';
+            html += '</div>';
+        }
+        html += '</div>';
+        return html;
+    }
+
+    // ======================================
+    // iPAD RENDERS
+    // ======================================
+    function ipadRender(s, dev) {
+        s = dev.w / 1290; // scale for iPad
+        if (currentScreen === 'calendar') return ipadCalendar(s, dev);
+        if (currentScreen === 'cardetails') return ipadCarDetails(s, dev);
+        if (currentScreen === 'backup') return ipadBackup(s, dev);
+        if (currentScreen === 'dashboard') return ipadDashboard(s, dev);
+        return ipadCalendar(s, dev);
+    }
+
+    function ipadCalendar(s, dev) {
+        var dayNames = ['ש','ו','ה','ד','ג','ב','א'];
+        var dayH = '';
+        for (var i=0; i<dayNames.length; i++) dayH += '<div style="text-align:center; font-size:'+F(32,s)+'; color:#6b7280; font-weight:600;">'+dayNames[i]+'</div>';
+        var calCells = '';
+        for (var d=1; d<=28; d++) {
+            var isT = d===19, hasE = [5,12,15,19,22,25].indexOf(d)>=0;
+            var bg = isT ? 'background:#f59e0b; color:white; font-weight:700;' : 'color:#1f2937;';
+            var dot = hasE && !isT ? '<div style="width:'+P(12,s)+'; height:'+P(12,s)+'; background:#ef4444; border-radius:50%; margin:'+P(4,s)+' auto 0;"></div>' : '';
+            calCells += '<div style="text-align:center; padding:'+P(24,s)+' 0; border-radius:'+P(16,s)+'; font-size:'+F(36,s)+'; '+bg+'">'+d+dot+'</div>';
+        }
+
+        return '<div style="width:100%; height:100%; display:flex; flex-direction:column; background:#f3f4f6; font-family:-apple-system,sans-serif; direction:rtl;">' +
+            '<div style="height:'+P(70,s)+'; background:linear-gradient(135deg,#f59e0b,#d97706);"></div>' +
+            '<div style="background:linear-gradient(135deg,#f59e0b,#d97706); padding:'+P(8,s)+' '+P(48,s)+' '+P(32,s)+';">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                    '<span style="font-size:'+F(44,s)+'; color:white;">☰</span>' +
+                    '<span style="font-size:'+F(50,s)+'; font-weight:800; color:white;">DRVN - יומן פגישות</span>' +
+                    '<div style="display:flex; gap:'+P(16,s)+';"><span style="font-size:'+F(40,s)+'; color:white;">🔔</span><span style="font-size:'+F(40,s)+'; color:white;">🌙</span></div>' +
+                '</div>' +
+            '</div>' +
+            '<div style="flex:1; display:flex; direction:rtl;">' +
+                // Sidebar
+                '<div style="width:'+P(520,s)+'; background:white; border-left:1px solid #e5e7eb; padding:'+P(28,s)+';">' +
+                    '<div style="font-size:'+F(32,s)+'; font-weight:700; color:#1f2937; margin-bottom:'+P(16,s)+';">📋 פגישות היום</div>' +
+                    aptCardReal(s, '09:00', 'טויוטה קורולה', 'החלפת שמן', '12-345-67', '#f59e0b', '#fef3c7') +
+                    aptCardReal(s, '11:30', 'הונדה סיוויק', 'בדיקת בלמים', '98-765-43', '#3b82f6', '#dbeafe') +
+                    aptCardReal(s, '14:00', 'מאזדה 3', 'טיפול 30k', '55-123-88', '#10b981', '#dcfce7') +
+                    aptCardReal(s, '16:00', 'סקודה', 'צמיגים', '33-222-11', '#8b5cf6', '#ede9fe') +
+                '</div>' +
+                // Calendar main
+                '<div style="flex:1; padding:'+P(28,s)+';">' +
+                    '<div style="background:white; border-radius:'+P(24,s)+'; padding:'+P(32,s)+'; box-shadow:0 2px 12px rgba(0,0,0,0.06);">' +
+                        '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:'+P(24,s)+';">' +
+                            '<div style="width:'+P(72,s)+'; height:'+P(72,s)+'; background:#f3f4f6; border-radius:'+P(14,s)+'; display:flex; align-items:center; justify-content:center; font-size:'+F(32,s)+'; color:#6b7280;">→</div>' +
+                            '<span style="font-size:'+F(40,s)+'; font-weight:700; color:#1f2937;">פברואר 2026</span>' +
+                            '<div style="width:'+P(72,s)+'; height:'+P(72,s)+'; background:#f3f4f6; border-radius:'+P(14,s)+'; display:flex; align-items:center; justify-content:center; font-size:'+F(32,s)+'; color:#6b7280;">←</div>' +
+                        '</div>' +
+                        '<div style="display:grid; grid-template-columns:repeat(7,1fr); gap:'+P(6,s)+'; margin-bottom:'+P(8,s)+';">'+dayH+'</div>' +
+                        '<div style="display:grid; grid-template-columns:repeat(7,1fr); gap:'+P(6,s)+';">'+calCells+'</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }
+
+    function ipadCarDetails(s, dev) {
+        return '<div style="width:100%; height:100%; display:flex; flex-direction:column; background:#f3f4f6; font-family:-apple-system,sans-serif; direction:rtl;">' +
+            '<div style="height:'+P(70,s)+'; background:linear-gradient(135deg,#f59e0b,#d97706);"></div>' +
+            '<div style="background:linear-gradient(135deg,#f59e0b,#d97706); padding:'+P(8,s)+' '+P(48,s)+' '+P(32,s)+';">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                    '<span style="font-size:'+F(44,s)+'; color:white;">←</span>' +
+                    '<span style="font-size:'+F(50,s)+'; font-weight:800; color:white;">פרטי רכב</span>' +
+                    '<span style="font-size:'+F(40,s)+'; color:white;">✏️</span>' +
+                '</div>' +
+            '</div>' +
+            '<div style="flex:1; display:flex; direction:rtl; padding:'+P(28,s)+';">' +
+                // Left - car image + info
+                '<div style="flex:1; padding-left:'+P(20,s)+';">' +
+                    '<div style="height:'+P(600,s)+'; background:linear-gradient(135deg,#e5e7eb,#d1d5db); border-radius:'+P(24,s)+'; display:flex; align-items:center; justify-content:center; margin-bottom:'+P(20,s)+';">' +
+                        '<div style="text-align:center;"><div style="font-size:'+F(140,s)+';">🚗</div><div style="font-size:'+F(28,s)+'; color:#6b7280;">תמונת הרכב</div></div>' +
+                    '</div>' +
+                    '<div style="display:flex; gap:'+P(14,s)+'; flex-wrap:wrap;">' +
+                        actionBtn(s, '+ הוסף טיפול', '#10b981', '#fff', '🔧') +
+                        actionBtn(s, 'שלח WhatsApp', '#22c55e', '#fff', '📱') +
+                    '</div>' +
+                '</div>' +
+                // Right - details + history
+                '<div style="flex:1; padding-right:'+P(20,s)+';">' +
+                    '<div style="background:white; border-radius:'+P(24,s)+'; padding:'+P(28,s)+'; box-shadow:0 2px 12px rgba(0,0,0,0.06); margin-bottom:'+P(20,s)+';">' +
+                        '<div style="display:flex; justify-content:space-between; margin-bottom:'+P(18,s)+';">' +
+                            '<span style="background:#fef3c7; padding:'+P(10,s)+' '+P(24,s)+'; border-radius:'+P(12,s)+'; font-weight:800; font-size:'+F(36,s)+'; color:#92400e;">12-345-67</span>' +
+                            '<span style="background:#dbeafe; padding:'+P(8,s)+' '+P(18,s)+'; border-radius:'+P(20,s)+'; font-size:'+F(24,s)+'; font-weight:600; color:#1e40af;">🔵 בטיפול</span>' +
+                        '</div>' +
+                        '<div style="display:grid; grid-template-columns:1fr 1fr; gap:'+P(14,s)+';">' +
+                            detailItem(s, '👤', 'בעלים', 'יוסף כהן') +
+                            detailItem(s, '🚗', 'רכב', 'טויוטה קורולה') +
+                            detailItem(s, '📅', 'שנה', '2022') +
+                            detailItem(s, '🔧', 'ק"מ', '45,230') +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="font-size:'+F(30,s)+'; font-weight:700; color:#1f2937; margin-bottom:'+P(12,s)+';">📋 היסטוריית טיפולים</div>' +
+                    maintenanceCard(s, '15/01/2026', 'החלפת שמן', '₪350', '#10b981') +
+                    maintenanceCard(s, '20/11/2025', 'בדיקת בלמים', '₪180', '#3b82f6') +
+                    maintenanceCard(s, '05/08/2025', 'טיפול 30,000', '₪1,200', '#f59e0b') +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }
+
+    function ipadBackup(s, dev) {
+        return phoneBackup(s, dev); // Same layout works well for iPad at scale
+    }
+
+    function ipadDashboard(s, dev) {
+        return '<div style="width:100%; height:100%; display:flex; flex-direction:column; background:#f3f4f6; font-family:-apple-system,sans-serif; direction:rtl;">' +
+            '<div style="height:'+P(70,s)+'; background:linear-gradient(135deg,#f59e0b,#d97706);"></div>' +
+            '<div style="background:linear-gradient(135deg,#f59e0b,#d97706); padding:'+P(8,s)+' '+P(48,s)+' '+P(32,s)+';">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                    '<span style="font-size:'+F(44,s)+'; color:white;">☰</span>' +
+                    '<span style="font-size:'+F(50,s)+'; font-weight:800; color:white;">לוח בקרה</span>' +
+                    '<span></span>' +
+                '</div>' +
+            '</div>' +
+            '<div style="flex:1; padding:'+P(28,s)+'; direction:rtl;">' +
+                '<div style="display:flex; gap:'+P(16,s)+'; margin-bottom:'+P(24,s)+';">' +
+                    dashStatCard(s, '12', 'סה"כ', '#f59e0b', '#fffbeb') +
+                    dashStatCard(s, '4', 'ממתינים', '#ef4444', '#fef2f2') +
+                    dashStatCard(s, '3', 'בטיפול', '#3b82f6', '#eff6ff') +
+                    dashStatCard(s, '5', 'הושלמו', '#10b981', '#f0fdf4') +
+                '</div>' +
+                '<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:'+P(20,s)+';">' +
+                    kanbanSectionInline(s, '🟡 ממתינים', '4', '#fef3c7', '#92400e', [
+                        {plate:'12-345-67', name:'יוסף כהן', car:'טויוטה קורולה', time:'09:00'},
+                        {plate:'44-567-89', name:'מיכל דוד', car:'יונדאי i30', time:'10:30'},
+                        {plate:'66-444-22', name:'עמית רוזן', car:'ניסאן', time:'12:00'}
+                    ]) +
+                    kanbanSectionInline(s, '🔵 בטיפול', '3', '#dbeafe', '#1e40af', [
+                        {plate:'98-765-43', name:'דוד לוי', car:'הונדה סיוויק', time:'08:00'},
+                        {plate:'33-222-11', name:'אילן גרין', car:'סקודה', time:'11:00'}
+                    ]) +
+                    kanbanSectionInline(s, '🟢 הושלמו', '5', '#dcfce7', '#166534', [
+                        {plate:'55-123-88', name:'שרה אברהם', car:'מאזדה 3', time:'07:30'},
+                        {plate:'77-888-99', name:'רחל כץ', car:'קיא', time:'13:00'},
+                        {plate:'22-111-33', name:'נועה שמש', car:'פולקס', time:'15:00'}
+                    ]) +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }
+
+    function kanbanSectionInline(s, title, count, bg, titleColor, cards) {
+        var ch = '';
+        for (var i=0; i<cards.length; i++) {
+            var c = cards[i];
+            ch += '<div style="background:white; border-radius:'+P(16,s)+'; padding:'+P(18,s)+'; margin-top:'+P(10,s)+'; box-shadow:0 1px 4px rgba(0,0,0,0.05);">' +
+                '<div style="display:flex; justify-content:space-between; margin-bottom:'+P(6,s)+';">' +
+                    '<span style="font-size:'+F(28,s)+'; font-weight:700; color:#1f2937;">'+c.plate+'</span>' +
+                    '<span style="font-size:'+F(22,s)+'; color:#9ca3af;">'+c.time+'</span>' +
+                '</div>' +
+                '<div style="font-size:'+F(24,s)+'; color:#374151;">'+c.name+' • '+c.car+'</div>' +
+            '</div>';
+        }
+        return '<div style="background:'+bg+'; border-radius:'+P(20,s)+'; padding:'+P(20,s)+';">' +
+            '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                '<span style="font-size:'+F(30,s)+'; font-weight:700; color:'+titleColor+';">'+title+'</span>' +
+                '<span style="background:rgba(0,0,0,0.08); padding:'+P(4,s)+' '+P(14,s)+'; border-radius:'+P(16,s)+'; font-size:'+F(24,s)+'; color:'+titleColor+'; font-weight:600;">'+count+'</span>' +
+            '</div>' + ch +
+        '</div>';
+    }
+
+    // ======================================
+    // WATCH RENDERS
+    // ======================================
+    function watchHome(dev) {
+        var s = 1;
+        return '<div style="width:100%; height:100%; background:linear-gradient(180deg,#1a1a2e,#0d0d1a); color:white; padding:40px 28px; display:flex; flex-direction:column; font-family:-apple-system,sans-serif; border-radius:80px;">' +
+            '<div style="text-align:center; margin-bottom:16px;"><div style="font-size:20px; color:#f59e0b; font-weight:800; letter-spacing:2px;">DRVN</div></div>' +
+            '<div style="display:flex; gap:8px; margin-bottom:14px;">' +
+                '<div style="flex:1; background:rgba(245,158,11,0.15); border-radius:14px; padding:10px; text-align:center;"><div style="font-size:30px; font-weight:800; color:#f59e0b;">12</div><div style="font-size:12px; color:#f59e0b;">רכבים</div></div>' +
+                '<div style="flex:1; background:rgba(59,130,246,0.15); border-radius:14px; padding:10px; text-align:center;"><div style="font-size:30px; font-weight:800; color:#3b82f6;">3</div><div style="font-size:12px; color:#3b82f6;">בטיפול</div></div>' +
+            '</div>' +
+            '<div style="background:rgba(255,255,255,0.08); border-radius:14px; padding:12px; margin-bottom:8px;">' +
+                '<div style="font-size:10px; color:#9ca3af; margin-bottom:4px;">תור הבא</div>' +
+                '<div style="display:flex; justify-content:space-between;"><div style="font-size:18px; font-weight:700; color:#f59e0b;">09:00</div><div style="text-align:right;"><div style="font-size:14px; font-weight:600;">טויוטה</div><div style="font-size:10px; color:#9ca3af;">12-345-67</div></div></div>' +
+            '</div>' +
+            '<div style="background:rgba(255,255,255,0.08); border-radius:14px; padding:12px; margin-bottom:8px;">' +
+                '<div style="display:flex; justify-content:space-between;"><div style="font-size:18px; font-weight:700; color:#3b82f6;">11:30</div><div style="text-align:right;"><div style="font-size:14px; font-weight:600;">הונדה</div><div style="font-size:10px; color:#9ca3af;">98-765-43</div></div></div>' +
+            '</div>' +
+            '<div style="background:rgba(255,255,255,0.08); border-radius:14px; padding:12px;">' +
+                '<div style="display:flex; justify-content:space-between;"><div style="font-size:18px; font-weight:700; color:#10b981;">14:00</div><div style="text-align:right;"><div style="font-size:14px; font-weight:600;">מאזדה</div><div style="font-size:10px; color:#9ca3af;">55-123-88</div></div></div>' +
+            '</div>' +
+        '</div>';
+    }
+
+    function watchCalendar(dev) {
+        var dayL = ['S','M','T','W','T','F','S'];
+        var dh=''; for(var i=0;i<7;i++) dh+='<div style="text-align:center;font-size:10px;color:#6b7280;">'+dayL[i]+'</div>';
+        var cd=''; for(var d=1;d<=28;d++){var t=d===19;cd+='<div style="text-align:center;font-size:13px;padding:3px;'+(t?'background:#f59e0b;border-radius:50%;':'')+'">'+d+'</div>';}
+        return '<div style="width:100%;height:100%;background:linear-gradient(180deg,#1a1a2e,#0d0d1a);color:white;padding:32px 20px;display:flex;flex-direction:column;font-family:-apple-system,sans-serif;border-radius:80px;">' +
+            '<div style="text-align:center;margin-bottom:10px;"><div style="font-size:15px;color:#f59e0b;font-weight:700;">פברואר 2026</div></div>' +
+            '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:8px;direction:ltr;">'+dh+'</div>' +
+            '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:10px;direction:ltr;">'+cd+'</div>' +
+            '<div style="font-size:12px;color:#9ca3af;margin-bottom:6px;text-align:right;">תורים</div>' +
+            '<div style="background:rgba(245,158,11,0.15);border-radius:10px;padding:8px;margin-bottom:5px;font-size:13px;"><span style="color:#f59e0b;font-weight:700;">09:00</span> טויוטה</div>' +
+            '<div style="background:rgba(59,130,246,0.15);border-radius:10px;padding:8px;margin-bottom:5px;font-size:13px;"><span style="color:#3b82f6;font-weight:700;">11:30</span> הונדה</div>' +
+            '<div style="background:rgba(16,185,129,0.15);border-radius:10px;padding:8px;font-size:13px;"><span style="color:#10b981;font-weight:700;">14:00</span> מאזדה</div>' +
+        '</div>';
+    }
+
+    // ======================================
+    // DOWNLOAD
+    // ======================================
+    function downloadCurrent() {
+        var loading = document.getElementById('loadingOverlay');
+        loading.classList.add('show');
+        var frame = document.getElementById('screenshotFrame');
+        var dev = devices[currentDevice];
+        html2canvas(frame, { width:dev.w, height:dev.h, scale:1, useCORS:true, backgroundColor:currentDevice==='watch'?'#0d0d1a':'#f3f4f6' }).then(function(canvas) {
+            var link = document.createElement('a');
+            link.download = 'DRVN-'+currentDevice+'-'+currentScreen+'-'+dev.w+'x'+dev.h+'.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            loading.classList.remove('show');
+        }).catch(function(err) { alert('Error: '+err.message); loading.classList.remove('show'); });
+    }
+
+    function downloadAll() {
+        var loading = document.getElementById('loadingOverlay');
+        loading.classList.add('show');
+        var allTasks = [];
+        var dks = ['iphone67','iphone65','ipad','watch'];
+        var allScr = {iphone67:['calendar','cardetails','backup','dashboard'], iphone65:['calendar','cardetails','backup','dashboard'], ipad:['calendar','cardetails','backup','dashboard'], watch:['calendar','cardetails']};
+        for(var di=0;di<dks.length;di++){var dk=dks[di];var ss=allScr[dk];for(var si=0;si<ss.length;si++){allTasks.push({device:dk,screen:ss[si]});}}
+        var savedDev = currentDevice, savedScr = currentScreen;
+        var idx=0;
+        function next(){
+            if(idx>=allTasks.length){loading.classList.remove('show');alert('Done! '+allTasks.length+' screenshots downloaded.');currentDevice=savedDev;currentScreen=savedScr;render();return;}
+            var t=allTasks[idx]; currentDevice=t.device; currentScreen=t.screen; render();
+            setTimeout(function(){
+                var frame=document.getElementById('screenshotFrame'); var dev=devices[t.device];
+                html2canvas(frame,{width:dev.w,height:dev.h,scale:1,useCORS:true,backgroundColor:t.device==='watch'?'#0d0d1a':'#f3f4f6'}).then(function(canvas){
+                    var link=document.createElement('a');link.download='DRVN-'+t.device+'-'+t.screen+'-'+dev.w+'x'+dev.h+'.png';link.href=canvas.toDataURL('image/png');link.click();idx++;setTimeout(next,500);
+                }).catch(function(){idx++;setTimeout(next,500);});
+            },300);
+        }
+        next();
+    }
+
+    render();
+    </script>
+</body>
+</html>

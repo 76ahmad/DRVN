@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>התחברות - DRVN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -10,117 +10,403 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <style>
         * {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
-        /* Hide any floating action buttons on login page */
-        .fab-button,
-        button[class*="floating"],
-        button[class*="fixed"],
-        [onclick*="openCarModal"] {
-            display: none !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
+
+        body {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            padding-top: max(24px, env(safe-area-inset-top));
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 380px;
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .logo-text {
+            font-size: 42px;
+            font-weight: 900;
+            color: #f59e0b;
+            letter-spacing: 6px;
+        }
+
+        .tagline {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-top: 12px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 24px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: transparent;
+            color: #64748b;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        /* Form */
+        .form-container {
+            display: block;
+        }
+
+        .form-container.hidden {
+            display: none;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            color: #64748b;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 16px 48px 16px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .input-field::placeholder {
+            color: #64748b;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #f59e0b;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Password toggle */
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-wrapper .input-field {
+            padding-left: 48px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 18px;
+            transition: color 0.3s;
+        }
+
+        .toggle-password:hover {
+            color: #f59e0b;
+        }
+
+        /* Buttons */
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+            transition: all 0.3s;
+            margin-top: 8px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(245, 158, 11, 0.5);
+        }
+
+        .submit-btn.register {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .submit-btn.register:hover {
+            box-shadow: 0 6px 25px rgba(16, 185, 129, 0.5);
+        }
+
+        /* Links */
+        .forgot-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #f59e0b;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .forgot-link:hover {
+            color: #fbbf24;
+        }
+
+        /* Messages */
+        .message {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+        }
+
+        .message.success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            color: #6ee7b7;
+        }
+
+        .message.warning {
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(245, 158, 11, 0.5);
+            color: #fcd34d;
+        }
+
+        /* Trial Info Box */
+        .trial-info {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .trial-info-title {
+            color: #93c5fd;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .trial-info ul {
+            color: #bfdbfe;
+            font-size: 13px;
+            list-style: none;
+            padding: 0;
+        }
+
+        .trial-info li {
+            margin-bottom: 4px;
+        }
+
+        /* Features */
+        .features {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-top: 40px;
+            padding-top: 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .feature-item {
+            text-align: center;
+        }
+
+        .feature-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .feature-text {
+            color: #64748b;
+            font-size: 11px;
+        }
+
+        /* Small label */
+        .small-label {
+            color: #64748b;
+            font-size: 11px;
+            margin-top: 6px;
+        }
+
+        /* Resend button */
+        .resend-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            border-radius: 10px;
+            color: #fcd34d;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: all 0.3s;
+        }
+
+        .resend-btn:hover {
+            background: rgba(245, 158, 11, 0.3);
+        }
+
+        .resend-btn:disabled {
+            background: rgba(100, 116, 139, 0.2);
+            border-color: rgba(100, 116, 139, 0.4);
+            color: #64748b;
+            cursor: not-allowed;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-amber-900 min-h-screen flex items-center justify-center p-4">
-    
-    <!-- Version Indicator - للتأكد من التحديث -->
-    <div style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; border-radius: 5px; font-size: 10px; z-index: 9999;">
-        v3.2-HIDE-FAB 🧹
-    </div>
-    
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
-        <!-- Logo -->
-        <div class="text-center mb-6">
-            <h1 class="text-4xl font-bold text-amber-500">DRVN 🏁</h1>
-            <p class="text-gray-600 mt-2">מערכת ניהול מוסך</p>
-            <p class="text-sm text-gray-500">ניהול מקצועי ויעיל לרכבים</p>
+<body>
+    <div class="login-container">
+        <!-- Logo Section -->
+        <div class="logo-section">
+            <div class="logo-icon">🏁</div>
+            <div class="logo-text">DRVN</div>
+            <p class="tagline">מערכת ניהול מוסך מקצועית</p>
         </div>
 
         <!-- Tabs -->
-        <div class="flex mb-6 bg-gray-100 rounded-lg p-1">
-            <button onclick="switchTab('login')" id="loginTab" class="flex-1 py-2 px-4 rounded-md font-bold text-white bg-amber-500 transition">
-                התחבר
-            </button>
-            <button onclick="switchTab('register')" id="registerTab" class="flex-1 py-2 px-4 rounded-md font-bold text-gray-600 transition">
-                הרשם
-            </button>
+        <div class="tabs">
+            <button class="tab-btn active" id="loginTab" onclick="switchTab('login')">התחבר</button>
+            <button class="tab-btn" id="registerTab" onclick="switchTab('register')">הרשם</button>
         </div>
+
+        <!-- Messages -->
+        <div class="message" id="messageBox"></div>
 
         <!-- Login Form -->
-        <div id="loginForm">
-            <form onsubmit="handleLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">אימייל</label>
-                    <input type="email" id="loginEmail" required 
-                           class="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-amber-500 focus:outline-none"
-                           placeholder="your-email@example.com">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">סיסמה</label>
-                    <input type="password" id="loginPassword" required minlength="6"
-                           class="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-amber-500 focus:outline-none"
-                           placeholder="••••••••">
-                </div>
-                
-                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-lg transition">
-                    🔓 התחבר
+        <form id="loginForm" class="form-container" onsubmit="handleLogin(event)">
+            <div class="input-group">
+                <span class="input-icon">📧</span>
+                <input type="email" id="loginEmail" class="input-field" placeholder="אימייל" required>
+            </div>
+
+            <div class="input-group password-wrapper">
+                <span class="input-icon">🔒</span>
+                <input type="password" id="loginPassword" class="input-field" placeholder="סיסמה" required minlength="6">
+                <button type="button" class="toggle-password" onclick="togglePassword('loginPassword', this)">
+                    <span>👁️</span>
                 </button>
-            </form>
-            
-            <div id="loginMessage" class="mt-4 hidden"></div>
-        </div>
+            </div>
+
+            <button type="submit" class="submit-btn">🚀 התחבר</button>
+
+            <a href="#" class="forgot-link" onclick="showForgotPassword(); return false;">שכחת סיסמה?</a>
+        </form>
 
         <!-- Register Form -->
-        <div id="registerForm" class="hidden">
-            <form onsubmit="handleRegister(event)" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">אימייל</label>
-                    <input type="email" id="registerEmail" required 
-                           class="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-amber-500 focus:outline-none"
-                           placeholder="your-email@example.com">
-                    <p class="text-xs text-gray-500 mt-1">נשלח אליך קוד אימות לאימייל זה</p>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">סיסמה (לפחות 6 תווים)</label>
-                    <input type="password" id="registerPassword" required minlength="6"
-                           class="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-amber-500 focus:outline-none"
-                           placeholder="••••••••">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">אימות סיסמה</label>
-                    <input type="password" id="registerPasswordConfirm" required minlength="6"
-                           class="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-amber-500 focus:outline-none"
-                           placeholder="••••••••">
-                </div>
-                
-                <div class="bg-blue-50 border border-blue-300 p-4 rounded-lg text-sm">
-                    <p class="font-bold text-blue-800 mb-2">💡 ההרשמה כוללת:</p>
-                    <ul class="text-blue-700 space-y-1 mr-4">
-                        <li>✅ 30 יום ניסיון חינם</li>
-                        <li>✅ גישה מלאה לכל התכונות</li>
-                        <li>✅ אימות אימייל נדרש</li>
-                    </ul>
-                </div>
-                
-                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition">
-                    🎉 הרשם עכשיו
+        <form id="registerForm" class="form-container hidden" onsubmit="handleRegister(event)">
+            <div class="input-group">
+                <span class="input-icon">📧</span>
+                <input type="email" id="registerEmail" class="input-field" placeholder="אימייל" required>
+                <p class="small-label">נשלח אליך קוד אימות לאימייל זה</p>
+            </div>
+
+            <div class="input-group password-wrapper">
+                <span class="input-icon">🔒</span>
+                <input type="password" id="registerPassword" class="input-field" placeholder="סיסמה (לפחות 6 תווים)" required minlength="6">
+                <button type="button" class="toggle-password" onclick="togglePassword('registerPassword', this)">
+                    <span>👁️</span>
                 </button>
-            </form>
-            
-            <div id="registerMessage" class="mt-4 hidden"></div>
+            </div>
+
+            <div class="input-group password-wrapper">
+                <span class="input-icon">🔒</span>
+                <input type="password" id="registerPasswordConfirm" class="input-field" placeholder="אימות סיסמה" required minlength="6">
+                <button type="button" class="toggle-password" onclick="togglePassword('registerPasswordConfirm', this)">
+                    <span>👁️</span>
+                </button>
+            </div>
+
+            <div class="trial-info">
+                <p class="trial-info-title">💡 ההרשמה כוללת:</p>
+                <ul>
+                    <li>✅ 30 יום ניסיון חינם</li>
+                    <li>✅ גישה מלאה לכל התכונות</li>
+                    <li>✅ אימות אימייל נדרש</li>
+                </ul>
+            </div>
+
+            <button type="submit" class="submit-btn register">🎉 הרשם עכשיו</button>
+        </form>
+
+        <!-- Features -->
+        <div class="features">
+            <div class="feature-item">
+                <div class="feature-icon">🚗</div>
+                <div class="feature-text">ניהול רכבים</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">📅</div>
+                <div class="feature-text">יומן פגישות</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🔔</div>
+                <div class="feature-text">תזכורות</div>
+            </div>
         </div>
     </div>
 
     <script>
-        console.log('🚀 DRVN Login Page v3.1-FIRESTORE-CHECK Loaded');
-        console.log('📅 Build Date:', new Date().toISOString());
-        
+        console.log('🚀 DRVN Login Page v4.0-NEW-DESIGN Loaded');
+
         // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCdSRfJCoU6xwDych3l_3K_hBZBHOi9jVg",
@@ -136,87 +422,114 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-        
-        console.log('✅ Firebase Initialized');
 
-        // Switch between login and register tabs
+        // Toggle Password Visibility
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            const icon = button.querySelector('span');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                icon.textContent = '👁️';
+            }
+        }
+
+        // Show Message
+        function showMessage(text, type = 'error') {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.className = `message show ${type}`;
+            messageBox.innerHTML = text;
+        }
+
+        // Hide Message
+        function hideMessage() {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.className = 'message';
+        }
+
+        // Switch Tabs
         function switchTab(tab) {
             const loginTab = document.getElementById('loginTab');
             const registerTab = document.getElementById('registerTab');
             const loginForm = document.getElementById('loginForm');
             const registerForm = document.getElementById('registerForm');
 
+            hideMessage();
+
             if (tab === 'login') {
-                loginTab.className = 'flex-1 py-2 px-4 rounded-md font-bold text-white bg-amber-500 transition';
-                registerTab.className = 'flex-1 py-2 px-4 rounded-md font-bold text-gray-600 transition';
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
                 loginForm.classList.remove('hidden');
                 registerForm.classList.add('hidden');
             } else {
-                registerTab.className = 'flex-1 py-2 px-4 rounded-md font-bold text-white bg-amber-500 transition';
-                loginTab.className = 'flex-1 py-2 px-4 rounded-md font-bold text-gray-600 transition';
+                registerTab.classList.add('active');
+                loginTab.classList.remove('active');
                 registerForm.classList.remove('hidden');
                 loginForm.classList.add('hidden');
+            }
+        }
+
+        // Forgot Password
+        function showForgotPassword() {
+            const email = prompt('הכנס את כתובת האימייל שלך לאיפוס סיסמה:');
+
+            if (email && email.trim()) {
+                auth.sendPasswordResetEmail(email.trim())
+                    .then(() => {
+                        showMessage('📧 נשלח אליך מייל לאיפוס הסיסמה. בדוק את תיבת הדואר שלך.', 'success');
+                    })
+                    .catch((error) => {
+                        if (error.code === 'auth/user-not-found') {
+                            showMessage('❌ לא נמצא משתמש עם אימייל זה', 'error');
+                        } else if (error.code === 'auth/invalid-email') {
+                            showMessage('❌ כתובת אימייל לא תקינה', 'error');
+                        } else {
+                            showMessage('❌ שגיאה: ' + error.message, 'error');
+                        }
+                    });
             }
         }
 
         // Handle Login
         async function handleLogin(event) {
             event.preventDefault();
-            
+
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
-            const messageDiv = document.getElementById('loginMessage');
 
             try {
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
 
-                // Check BOTH Firebase Auth AND Firestore for verification status
-                console.log('🔍 Checking verification status...');
-                console.log('Firebase Auth emailVerified:', user.emailVerified);
-                
-                // Check Firestore for manual verification by admin
+                // Check verification status
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 const userData = userDoc.data();
-                
-                console.log('Firestore emailVerified:', userData?.emailVerified);
-                console.log('Firestore verifiedManually:', userData?.verifiedManually);
-                
-                // Allow login if EITHER Firebase Auth verified OR Firestore verified (manual)
+
                 const isVerified = user.emailVerified || userData?.emailVerified === true;
-                
+
                 if (!isVerified) {
-                    console.log('❌ User not verified in either system');
-                    messageDiv.className = 'mt-4 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded';
-                    messageDiv.innerHTML = `
-                        <p class="font-bold">⚠️ האימייל לא אומת!</p>
-                        <p class="text-sm mt-2">אנא אמת את האימייל שלך לפני שתתחבר.</p>
-                        <p class="text-xs mt-2 text-gray-600">אם אימתת דרך המנהל, נסה שוב או פנה לתמיכה.</p>
-                        <button onclick="resendVerificationEmailNew()" id="resendBtn" class="mt-2 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded font-bold text-sm">
+                    showMessage(`
+                        <p><strong>⚠️ האימייל לא אומת!</strong></p>
+                        <p style="margin-top: 8px; font-size: 13px;">אנא אמת את האימייל שלך לפני שתתחבר.</p>
+                        <button onclick="resendVerificationEmail()" class="resend-btn" id="resendBtn">
                             📧 שלח אימות מחדש
                         </button>
-                    `;
-                    messageDiv.classList.remove('hidden');
+                    `, 'warning');
                     return;
                 }
-                
-                console.log('✅ User verified - allowing login');
-                if (userData?.verifiedManually) {
-                    console.log('ℹ️ User was verified manually by admin');
-                }
 
-                messageDiv.className = 'mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded';
-                messageDiv.innerHTML = '<p class="font-bold">✅ התחברת בהצלחה! מעביר אותך למערכת...</p>';
-                messageDiv.classList.remove('hidden');
+                showMessage('✅ התחברת בהצלחה! מעביר אותך למערכת...', 'success');
 
-                // Redirect to main system
                 setTimeout(() => {
                     window.location.href = 'index.html';
                 }, 1500);
 
             } catch (error) {
                 let errorMessage = 'שגיאה בהתחברות';
-                
+
                 if (error.code === 'auth/user-not-found') {
                     errorMessage = 'המשתמש לא קיים. אנא הרשם תחילה.';
                 } else if (error.code === 'auth/wrong-password') {
@@ -227,40 +540,31 @@
                     errorMessage = 'יותר מדי ניסיונות. נסה שוב מאוחר יותר.';
                 }
 
-                messageDiv.className = 'mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded';
-                messageDiv.innerHTML = `<p class="font-bold">❌ ${errorMessage}</p>`;
-                messageDiv.classList.remove('hidden');
+                showMessage('❌ ' + errorMessage, 'error');
             }
         }
 
         // Handle Register
         async function handleRegister(event) {
             event.preventDefault();
-            
+
             const email = document.getElementById('registerEmail').value.trim();
             const password = document.getElementById('registerPassword').value;
             const confirmPassword = document.getElementById('registerPasswordConfirm').value;
-            const messageDiv = document.getElementById('registerMessage');
 
-            // Check if passwords match
             if (password !== confirmPassword) {
-                messageDiv.className = 'mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded';
-                messageDiv.innerHTML = '<p class="font-bold">❌ הסיסמאות לא תואמות!</p>';
-                messageDiv.classList.remove('hidden');
+                showMessage('❌ הסיסמאות לא תואמות!', 'error');
                 return;
             }
 
             try {
-                // Create user
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
 
-                // Send verification email
                 await user.sendEmailVerification();
 
-                // Create user document with trial subscription
                 const trialEndDate = new Date();
-                trialEndDate.setDate(trialEndDate.getDate() + 30); // 30 days trial
+                trialEndDate.setDate(trialEndDate.getDate() + 30);
 
                 await db.collection('users').doc(user.uid).set({
                     userId: user.uid,
@@ -268,29 +572,25 @@
                     subscriptionStatus: 'trial',
                     subscriptionEndDate: firebase.firestore.Timestamp.fromDate(trialEndDate),
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    emailVerified: false
+                    emailVerified: false,
+                    onboardingCompleted: false
                 });
 
-                messageDiv.className = 'mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded';
-                messageDiv.innerHTML = `
-                    <p class="font-bold">✅ ההרשמה הצליחה!</p>
-                    <p class="text-sm mt-2">📧 נשלח אליך מייל אימות לכתובת: <strong>${email}</strong></p>
-                    <p class="text-sm mt-2">אנא פתח את המייל ולחץ על קישור האימות.</p>
-                    <p class="text-sm mt-2 font-bold text-green-800">לאחר האימות, תוכל להתחבר למערכת.</p>
-                `;
-                messageDiv.classList.remove('hidden');
+                showMessage(`
+                    <p><strong>✅ ההרשמה הצליחה!</strong></p>
+                    <p style="margin-top: 8px; font-size: 13px;">📧 נשלח אליך מייל אימות לכתובת: <strong>${email}</strong></p>
+                    <p style="margin-top: 8px; font-size: 13px;">אנא פתח את המייל ולחץ על קישור האימות.</p>
+                `, 'success');
 
-                // Sign out user until they verify email
                 await auth.signOut();
 
-                // Clear form
                 document.getElementById('registerEmail').value = '';
                 document.getElementById('registerPassword').value = '';
                 document.getElementById('registerPasswordConfirm').value = '';
 
             } catch (error) {
                 let errorMessage = 'שגיאה בהרשמה';
-                
+
                 if (error.code === 'auth/email-already-in-use') {
                     errorMessage = 'האימייל כבר בשימוש. אנא התחבר או השתמש באימייל אחר.';
                 } else if (error.code === 'auth/invalid-email') {
@@ -299,180 +599,65 @@
                     errorMessage = 'הסיסמה חלשה מדי. השתמש לפחות ב-6 תווים.';
                 }
 
-                messageDiv.className = 'mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded';
-                messageDiv.innerHTML = `<p class="font-bold">❌ ${errorMessage}</p>`;
-                messageDiv.classList.remove('hidden');
+                showMessage('❌ ' + errorMessage, 'error');
             }
         }
 
-        // ===================================================
-        // 🔧 RATE LIMITING FIX - النظام الجديد المحسّن
-        // ===================================================
-        
+        // Resend Verification Email
         let lastResendTime = 0;
-        const RESEND_COOLDOWN = 30000; // 30 seconds
-        let countdownInterval = null;
-        
-        console.log('✅ Rate Limiting System Loaded');
-        console.log('⏱️ Cooldown Period: 30 seconds');
+        const RESEND_COOLDOWN = 30000;
 
-        // Resend Verification Email with Rate Limiting
-        async function resendVerificationEmailNew() {
+        async function resendVerificationEmail() {
             const currentTime = Date.now();
-            const timeElapsed = currentTime - lastResendTime;
-            
-            console.log('🔍 Rate Limit Check:', {
-                lastResendTime: lastResendTime,
-                currentTime: currentTime,
-                timeElapsed: timeElapsed + 'ms',
-                cooldownRequired: RESEND_COOLDOWN + 'ms',
-                canResend: (lastResendTime === 0 || timeElapsed >= RESEND_COOLDOWN)
-            });
-            
-            // Check if cooldown period has passed
-            if (lastResendTime > 0 && timeElapsed < RESEND_COOLDOWN) {
-                const remainingSeconds = Math.ceil((RESEND_COOLDOWN - timeElapsed) / 1000);
-                console.log('⏱️ Rate limit active - wait', remainingSeconds, 'seconds');
-                
-                alert(`⏱️ אנא תחכה ${remainingSeconds} שניות לפני שליחת מייל נוסף.`);
+
+            if (lastResendTime > 0 && (currentTime - lastResendTime) < RESEND_COOLDOWN) {
+                const remaining = Math.ceil((RESEND_COOLDOWN - (currentTime - lastResendTime)) / 1000);
+                alert(`⏱️ אנא המתן ${remaining} שניות`);
                 return;
             }
-            
+
             try {
                 const user = auth.currentUser;
                 if (user) {
-                    console.log('📧 Sending verification email to:', user.email);
-                    
                     await user.sendEmailVerification();
                     lastResendTime = Date.now();
-                    
-                    console.log('✅ Email sent successfully at timestamp:', lastResendTime);
-                    
-                    // Show success message with button
-                    const messageDiv = document.getElementById('loginMessage');
-                    messageDiv.className = 'mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded';
-                    messageDiv.innerHTML = `
-                        <p class="font-bold">✅ נשלח מייל אימות חדש! בדוק את תיבת הדואר שלך.</p>
-                        <p class="text-sm mt-2">לאחר שתאמת את המייל, תוכל להתחבר שוב.</p>
-                        <button onclick="resendVerificationEmailNew()" id="resendBtn" class="mt-3 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded font-bold text-sm w-full">
-                            📧 שלח אימות מחדש
-                        </button>
-                    `;
-                    messageDiv.classList.remove('hidden');
-                    
-                    // Start countdown immediately
-                    startResendCountdown();
-                    
-                    // Sign out user after sending verification email
-                    console.log('🚪 Signing out user in 2 seconds...');
-                    setTimeout(async () => {
-                        await auth.signOut();
-                        console.log('✅ User signed out');
-                    }, 2000);
-                    
-                } else {
-                    console.log('❌ No user logged in');
-                    alert('❌ אנא התחבר תחילה.');
+
+                    showMessage('✅ נשלח מייל אימות חדש! בדוק את תיבת הדואר שלך.', 'success');
+
+                    // Start countdown
+                    const btn = document.getElementById('resendBtn');
+                    if (btn) {
+                        btn.disabled = true;
+                        let remaining = 30;
+                        const interval = setInterval(() => {
+                            remaining--;
+                            if (remaining > 0) {
+                                btn.textContent = `⏱️ המתן ${remaining} שניות`;
+                            } else {
+                                clearInterval(interval);
+                                btn.disabled = false;
+                                btn.textContent = '📧 שלח אימות מחדש';
+                            }
+                        }, 1000);
+                    }
+
+                    setTimeout(() => auth.signOut(), 2000);
                 }
             } catch (error) {
-                console.error('❌ Error sending verification email:', error);
-                
                 if (error.code === 'auth/too-many-requests') {
-                    alert('⏱️ יותר מדי בקשות מ-Firebase. אנא המתן דקה ונסה שוב.');
+                    alert('⏱️ יותר מדי בקשות. אנא המתן דקה ונסה שוב.');
                 } else {
-                    alert('❌ שגיאה בשליחת מייל: ' + error.message);
+                    alert('❌ שגיאה: ' + error.message);
                 }
             }
-        }
-        
-        // Countdown timer for resend button
-        function startResendCountdown() {
-            console.log('⏳ Starting countdown timer...');
-            
-            const button = document.getElementById('resendBtn');
-            if (!button) {
-                console.warn('⚠️ Resend button not found');
-                return;
-            }
-            
-            let remainingTime = Math.ceil(RESEND_COOLDOWN / 1000);
-            console.log('Countdown duration:', remainingTime, 'seconds');
-            
-            // Clear any existing countdown
-            if (countdownInterval) {
-                clearInterval(countdownInterval);
-            }
-            
-            // Update button appearance immediately
-            button.disabled = true;
-            button.className = 'mt-3 bg-gray-400 cursor-not-allowed text-white px-4 py-2 rounded font-bold text-sm w-full';
-            button.innerHTML = `⏱️ המתן ${remainingTime} שניות`;
-            
-            countdownInterval = setInterval(() => {
-                remainingTime--;
-                console.log('⏱️ Countdown:', remainingTime);
-                
-                // Check if button still exists (in case page changed)
-                const currentButton = document.getElementById('resendBtn');
-                if (!currentButton) {
-                    console.warn('⚠️ Button disappeared, stopping countdown');
-                    clearInterval(countdownInterval);
-                    return;
-                }
-                
-                if (remainingTime > 0) {
-                    currentButton.innerHTML = `⏱️ המתן ${remainingTime} שניות`;
-                } else {
-                    console.log('✅ Countdown complete - button re-enabled');
-                    clearInterval(countdownInterval);
-                    currentButton.disabled = false;
-                    currentButton.className = 'mt-3 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded font-bold text-sm w-full';
-                    currentButton.innerHTML = '📧 שלח אימות מחדש';
-                }
-            }, 1000);
         }
 
-        // Check if user is already logged in
+        // Check if already logged in
         auth.onAuthStateChanged(async (user) => {
             if (user && user.emailVerified) {
-                console.log('✅ User already logged in and verified:', user.email);
                 window.location.href = 'index.html';
-            } else if (user && !user.emailVerified) {
-                console.log('⚠️ User logged in but email not verified:', user.email);
-            } else {
-                console.log('👤 No user logged in');
             }
         });
-        
-        // Hide any floating action buttons from previous page
-        window.addEventListener('DOMContentLoaded', function() {
-            console.log('🧹 Cleaning up UI elements...');
-            
-            // Hide any FAB buttons that might be left over
-            const fabButtons = document.querySelectorAll('.fab-button, [class*="floating"], [class*="fixed"]');
-            fabButtons.forEach(btn => {
-                if (btn.style) {
-                    btn.style.display = 'none';
-                    console.log('✅ Hidden floating element:', btn.className);
-                }
-            });
-            
-            // Also hide any elements with position fixed at bottom
-            const allElements = document.querySelectorAll('*');
-            allElements.forEach(el => {
-                const style = window.getComputedStyle(el);
-                if (style.position === 'fixed' && 
-                    (style.bottom === '0px' || parseInt(style.bottom) < 100)) {
-                    // Don't hide the version indicator
-                    if (!el.textContent.includes('v3.1')) {
-                        el.style.display = 'none';
-                        console.log('✅ Hidden fixed element at bottom');
-                    }
-                }
-            });
-        });
-        
-        console.log('🎉 All systems ready!');
     </script>
 </body>
 </html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אין חיבור לאינטרנט - DRVN</title>
+    <link rel="icon" type="image/png" href="/icon-192.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #115e59 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .offline-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+
+        .offline-icon svg {
+            width: 60px;
+            height: 60px;
+            fill: #fff;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        p {
+            font-size: 16px;
+            opacity: 0.9;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .retry-btn {
+            background: #fff;
+            color: #0d9488;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .retry-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .retry-btn:active {
+            transform: translateY(0);
+        }
+
+        .status {
+            margin-top: 30px;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .status.online {
+            background: rgba(34, 197, 94, 0.3);
+        }
+
+        .tips {
+            margin-top: 40px;
+            text-align: right;
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .tips h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tips ul {
+            list-style: none;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .tips li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tips li::before {
+            content: "•";
+            color: #fbbf24;
+        }
+
+        .logo {
+            margin-top: 40px;
+            opacity: 0.7;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .cached-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(251, 191, 36, 0.2);
+            border-radius: 10px;
+            border: 1px solid rgba(251, 191, 36, 0.4);
+        }
+
+        .cached-info h4 {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #fbbf24;
+        }
+
+        .cached-info p {
+            font-size: 13px;
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        .view-cached-btn {
+            margin-top: 15px;
+            background: rgba(251, 191, 36, 0.3);
+            color: #fff;
+            border: 1px solid rgba(251, 191, 36, 0.5);
+            padding: 10px 25px;
+            font-size: 14px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .view-cached-btn:hover {
+            background: rgba(251, 191, 36, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="offline-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M23.64 7c-.45-.34-4.93-4-11.64-4-1.5 0-2.89.19-4.15.48L18.18 13.8 23.64 7zm-6.6 8.22L3.27 1.44 2 2.72l2.05 2.06C1.91 5.76.59 6.82.36 7l11.63 14.49.01.01.01-.01 3.9-4.86 3.32 3.32 1.27-1.27-3.46-3.46z"/>
+            </svg>
+        </div>
+
+        <h1>אין חיבור לאינטרנט</h1>
+        <p>נראה שאין לך חיבור פעיל לאינטרנט כרגע. בדוק את החיבור שלך ונסה שוב.</p>
+
+        <button class="retry-btn" onclick="tryReconnect()">
+            נסה שוב
+        </button>
+
+        <div class="status" id="status">
+            בודק חיבור...
+        </div>
+
+        <div class="cached-info">
+            <h4>נתונים שמורים במכשיר</h4>
+            <p>חלק מהנתונים שלך נשמרו במכשיר ויהיו זמינים כשתתחבר מחדש.</p>
+            <button class="view-cached-btn" onclick="viewCachedData()">
+                צפה בנתונים שמורים
+            </button>
+        </div>
+
+        <div class="tips">
+            <h3>טיפים לפתרון:</h3>
+            <ul>
+                <li>בדוק שה-WiFi או הנתונים הסלולריים מופעלים</li>
+                <li>נסה לכבות ולהדליק את מצב טיסה</li>
+                <li>התרחק ממקורות הפרעה</li>
+                <li>הפעל מחדש את הנתב</li>
+            </ul>
+        </div>
+
+        <div class="logo">DRVN</div>
+    </div>
+
+    <script>
+        // Check connection status
+        function checkConnection() {
+            const statusEl = document.getElementById('status');
+
+            if (navigator.onLine) {
+                statusEl.textContent = 'חיבור זוהה! טוען מחדש...';
+                statusEl.classList.add('online');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            } else {
+                statusEl.textContent = 'אין חיבור לאינטרנט';
+                statusEl.classList.remove('online');
+            }
+        }
+
+        // Try to reconnect
+        function tryReconnect() {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = 'מנסה להתחבר...';
+
+            fetch('/', { method: 'HEAD', cache: 'no-store' })
+                .then(() => {
+                    statusEl.textContent = 'חיבור הצליח! טוען...';
+                    statusEl.classList.add('online');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 500);
+                })
+                .catch(() => {
+                    statusEl.textContent = 'עדיין אין חיבור. נסה שוב.';
+                    statusEl.classList.remove('online');
+                });
+        }
+
+        // View cached data - redirect to app in offline mode
+        function viewCachedData() {
+            window.location.href = '/?offline=true';
+        }
+
+        // Listen for online/offline events
+        window.addEventListener('online', checkConnection);
+        window.addEventListener('offline', checkConnection);
+
+        // Initial check
+        checkConnection();
+
+        // Periodic check every 5 seconds
+        setInterval(checkConnection, 5000);
+    </script>
+</body>
+</html>

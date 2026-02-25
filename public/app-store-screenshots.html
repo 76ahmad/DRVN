@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DRVN - App Store Screenshots Generator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #1a1a2e;
+            color: #fff;
+            padding: 20px;
+            direction: ltr;
+        }
+        h1 { text-align: center; margin: 20px 0; font-size: 28px; color: #f59e0b; }
+        .info { text-align: center; color: #aaa; margin-bottom: 30px; font-size: 14px; }
+
+        /* ========== METADATA SECTION ========== */
+        .metadata-section {
+            max-width: 800px;
+            margin: 0 auto 40px;
+            background: #16213e;
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid #333;
+        }
+        .metadata-section h2 {
+            color: #f59e0b;
+            margin-bottom: 20px;
+            font-size: 22px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        .field {
+            margin-bottom: 20px;
+        }
+        .field label {
+            display: block;
+            color: #f59e0b;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .field .char-count {
+            color: #888;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+        .field textarea, .field input {
+            width: 100%;
+            background: #0f3460;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            direction: rtl;
+        }
+        .field textarea { min-height: 120px; resize: vertical; }
+        .field .note { color: #888; font-size: 12px; margin-top: 4px; }
+        .copy-btn {
+            background: #f59e0b;
+            color: #000;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+        .copy-btn:hover { background: #d97706; }
+
+        /* ========== REVIEW NOTES ========== */
+        .review-notes {
+            max-width: 800px;
+            margin: 0 auto 40px;
+            background: #1a3a1a;
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid #2d5a2d;
+        }
+        .review-notes h2 {
+            color: #4ade80;
+            margin-bottom: 20px;
+            font-size: 22px;
+            border-bottom: 1px solid #2d5a2d;
+            padding-bottom: 10px;
+        }
+        .review-notes pre {
+            background: #0a2a0a;
+            padding: 20px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #ccc;
+            direction: ltr;
+        }
+
+        /* ========== SCREENSHOTS SECTION ========== */
+        .screenshots-section {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .screenshots-section h2 {
+            text-align: center;
+            color: #f59e0b;
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+        .screenshot-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .screenshot-item {
+            text-align: center;
+        }
+        .screenshot-item h3 {
+            color: #ccc;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .screenshot-item canvas {
+            border: 2px solid #333;
+            border-radius: 8px;
+            max-height: 500px;
+            width: auto;
+        }
+        .download-btn {
+            display: inline-block;
+            margin-top: 10px;
+            background: #10b981;
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .download-btn:hover { background: #059669; }
+        .download-all-btn {
+            display: block;
+            margin: 30px auto;
+            background: #f59e0b;
+            color: #000;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .download-all-btn:hover { background: #d97706; }
+        .size-info {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>DRVN - App Store Submission Kit</h1>
+<p class="info">All metadata, review notes, and screenshots needed for App Store Connect</p>
+
+<!-- ==================== METADATA ==================== -->
+<div class="metadata-section">
+    <h2>1. App Store Metadata</h2>
+
+    <div class="field">
+        <label>App Name (30 chars max)</label>
+        <div class="char-count">24 / 30</div>
+        <input type="text" id="appName" value="DRVN - ניהול מוסך" readonly>
+        <button class="copy-btn" onclick="copyField('appName')">Copy</button>
+    </div>
+
+    <div class="field">
+        <label>Subtitle (30 chars max)</label>
+        <div class="char-count">27 / 30</div>
+        <input type="text" id="subtitle" value="ניהול רכבים, תורים ותזכורות" readonly>
+        <button class="copy-btn" onclick="copyField('subtitle')">Copy</button>
+    </div>
+
+    <div class="field">
+        <label>Promotional Text (170 chars max)</label>
+        <div class="char-count">~85 / 170</div>
+        <textarea id="promoText" rows="2" readonly>DRVN - מערכת ניהול מוסך חכמה. ניהול רכבים, תורים, טיפולים ותזכורות אוטומטיות. עובד גם אופליין!</textarea>
+        <button class="copy-btn" onclick="copyField('promoText')">Copy</button>
+    </div>
+
+    <div class="field">
+        <label>Description (4000 chars max)</label>
+        <textarea id="description" rows="18" readonly>DRVN - מערכת ניהול מוסך מקצועית ויעילה. נהל את כל הרכבים, הטיפולים, התורים והתזכורות שלך במקום אחד.
+
+תכונות עיקריות:
+
+• ניהול רכבים - הוסף ונהל את כל רכבי הלקוחות עם תמונות ופרטים מלאים
+• היסטוריית טיפולים - תיעוד מלא של כל הטיפולים לכל רכב
+• יומן תורים - יומן מסודר לקביעת פגישות וניהול הזמנים
+• תזכורות אוטומטיות - קבל התראות על תורים קרובים ישירות לטלפון
+• חיפוש מתקדם - חפש לפי מספר רישוי, שם בעלים, דגם או סוג רכב
+• לוח בקרה - סטטיסטיקות וסיכום פעילות המוסך
+• גיבוי ושחזור - שמור על המידע שלך בטוח בענן
+• תמיכה אופליין - עובד גם ללא חיבור לאינטרנט
+
+DRVN מיועד למוסכים קטנים ובינוניים ומאפשר ניהול מקצועי ופשוט של כל הפעילות היומיומית. חסוך זמן, שפר את השירות ללקוחות, ואל תפספס אף תור.</textarea>
+        <button class="copy-btn" onclick="copyField('description')">Copy</button>
+    </div>
+
+    <div class="field">
+        <label>Keywords (100 chars max, comma-separated)</label>
+        <div class="char-count">~90 / 100</div>
+        <input type="text" id="keywords" value="מוסך,ניהול רכבים,תורים,תזכורות,garage,טיפולים,רכב,שירות,appointments,car" readonly>
+        <button class="copy-btn" onclick="copyField('keywords')">Copy</button>
+    </div>
+
+    <div class="field">
+        <label>Support URL</label>
+        <input type="text" id="supportUrl" value="https://garage-17263.web.app" readonly>
+        <button class="copy-btn" onclick="copyField('supportUrl')">Copy</button>
+    </div>
+
+    <div class="field">
+        <label>Privacy Policy URL</label>
+        <input type="text" id="privacyUrl" value="https://garage-17263.web.app/privacy.html" readonly>
+        <button class="copy-btn" onclick="copyField('privacyUrl')">Copy</button>
+    </div>
+
+    <div class="field">
+        <label>Category</label>
+        <input type="text" value="Business (Primary) / Productivity (Secondary)" readonly>
+    </div>
+
+    <div class="field">
+        <label>Age Rating</label>
+        <input type="text" value="4+ (No objectionable content)" readonly>
+    </div>
+</div>
+
+<!-- ==================== APP REVIEW NOTES ==================== -->
+<div class="review-notes">
+    <h2>2. App Review Notes (CRITICAL - Copy this to App Store Connect)</h2>
+    <pre id="reviewNotes">Dear App Review Team,
+
+DRVN is a garage management app designed for small and medium auto repair shops in Israel. While it uses a WKWebView for its UI layer, it provides significant native functionality that goes well beyond a simple website wrapper:
+
+NATIVE FEATURES:
+1. Native iOS Push Notifications (FCM via APNs) - Real-time appointment reminders sent every 15 minutes via Firebase Cloud Functions → FCM → APNs. Users receive native iOS notifications even when the app is closed.
+
+2. Offline Support - Full Service Worker implementation with network-first caching for HTML and cache-first for images. The app works completely offline with an offline fallback page.
+
+3. Camera & Photo Integration - Users can capture photos of vehicles directly from the app using the native camera, with images stored in Firebase.
+
+4. Location Services - Integrated location access for garage-related functionality.
+
+5. Background Processing - Cloud Functions run server-side to process reminders and send notifications on schedule.
+
+6. App Shortcuts - Quick actions from the home screen (Add Vehicle, View Calendar).
+
+7. Deep Link Support - URL scheme support for direct navigation to specific app sections.
+
+WHY NATIVE APP vs WEBSITE:
+- Push notifications require native APNs integration (Safari web push is limited on iOS)
+- Offline functionality provides reliable access in garage environments with poor connectivity
+- Camera access is more seamless in the native context
+- Home screen presence and app shortcuts improve daily workflow for mechanics
+
+TEST ACCOUNT:
+The app requires Firebase Authentication. You can create a free account using any email or test with:
+Email: AppleTest@DRVN.com
+Password: TestDRVN2026!
+
+Thank you for your review.</pre>
+    <button class="copy-btn" onclick="copyReviewNotes()" style="margin-top: 10px; font-size: 14px; padding: 10px 24px;">Copy Review Notes</button>
+</div>
+
+<!-- ==================== SCREENSHOTS ==================== -->
+<div class="screenshots-section">
+    <h2>3. App Store Screenshots (1290 x 2796px - iPhone 6.7")</h2>
+    <p class="size-info">Each screenshot is exactly 1290x2796 pixels (iPhone 15 Pro Max / 6.7" display)</p>
+
+    <div class="screenshot-grid">
+        <div class="screenshot-item">
+            <h3>1. Home Screen</h3>
+            <canvas id="canvas1" width="1290" height="2796"></canvas>
+            <br>
+            <button class="download-btn" onclick="downloadCanvas('canvas1', 'drvn-screenshot-1-home.png')">Download PNG</button>
+        </div>
+        <div class="screenshot-item">
+            <h3>2. Add Car</h3>
+            <canvas id="canvas2" width="1290" height="2796"></canvas>
+            <br>
+            <button class="download-btn" onclick="downloadCanvas('canvas2', 'drvn-screenshot-2-add-car.png')">Download PNG</button>
+        </div>
+        <div class="screenshot-item">
+            <h3>3. Car Details</h3>
+            <canvas id="canvas3" width="1290" height="2796"></canvas>
+            <br>
+            <button class="download-btn" onclick="downloadCanvas('canvas3', 'drvn-screenshot-3-details.png')">Download PNG</button>
+        </div>
+        <div class="screenshot-item">
+            <h3>4. Calendar</h3>
+            <canvas id="canvas4" width="1290" height="2796"></canvas>
+            <br>
+            <button class="download-btn" onclick="downloadCanvas('canvas4', 'drvn-screenshot-4-calendar.png')">Download PNG</button>
+        </div>
+    </div>
+
+    <button class="download-all-btn" onclick="downloadAll()">Download All Screenshots</button>
+</div>
+
+<script>
+const CANVAS_W = 1290;
+const CANVAS_H = 2796;
+
+// Screenshot configs
+const screenshots = [
+    {
+        canvasId: 'canvas1',
+        imageSrc: '/screenshots/screenshot-1-home.png',
+        titleHe: 'נהל את כל רכבי המוסך',
+        subtitleHe: 'רשימת רכבים מסודרת עם חיפוש מהיר',
+        gradientColors: ['#0f172a', '#1e3a5f', '#0d9488']
+    },
+    {
+        canvasId: 'canvas2',
+        imageSrc: '/screenshots/screenshot-2-add-car.png',
+        titleHe: 'הוסף רכב בקלות',
+        subtitleHe: 'טופס מהיר עם תמונה ופרטים מלאים',
+        gradientColors: ['#1a0a2e', '#2d1b69', '#7c3aed']
+    },
+    {
+        canvasId: 'canvas3',
+        imageSrc: '/screenshots/screenshot-3-details.png',
+        titleHe: 'היסטוריית טיפולים מלאה',
+        subtitleHe: 'כל הטיפולים והמחירים במקום אחד',
+        gradientColors: ['#0a1628', '#1e3a5f', '#f59e0b']
+    },
+    {
+        canvasId: 'canvas4',
+        imageSrc: '/screenshots/screenshot-4-calendar.png',
+        titleHe: 'יומן תורים חכם',
+        subtitleHe: 'תזכורות אוטומטיות ישירות לטלפון',
+        gradientColors: ['#0f172a', '#064e3b', '#10b981']
+    }
+];
+
+function drawScreenshot(config) {
+    const canvas = document.getElementById(config.canvasId);
+    const ctx = canvas.getContext('2d');
+
+    // Draw gradient background
+    const grad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+    grad.addColorStop(0, config.gradientColors[0]);
+    grad.addColorStop(0.5, config.gradientColors[1]);
+    grad.addColorStop(1, config.gradientColors[2]);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+    // Add subtle pattern overlay
+    ctx.fillStyle = 'rgba(255,255,255,0.02)';
+    for (let i = 0; i < 20; i++) {
+        const x = Math.random() * CANVAS_W;
+        const y = Math.random() * CANVAS_H * 0.3;
+        const r = Math.random() * 100 + 50;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Draw title text (Hebrew - RTL)
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Title
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 80px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif';
+    ctx.fillText(config.titleHe, CANVAS_W / 2, 280);
+
+    // Subtitle
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = '44px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif';
+    ctx.fillText(config.subtitleHe, CANVAS_W / 2, 380);
+
+    // Load and draw screenshot image
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+        // Phone frame dimensions
+        const phoneW = 900;
+        const phoneH = 1860;
+        const phoneX = (CANVAS_W - phoneW) / 2;
+        const phoneY = 550;
+        const borderRadius = 60;
+
+        // Draw phone shadow
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 60;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 20;
+
+        // Draw phone frame (dark border)
+        ctx.fillStyle = '#000000';
+        roundRect(ctx, phoneX - 12, phoneY - 12, phoneW + 24, phoneH + 24, borderRadius + 8);
+        ctx.fill();
+
+        // Reset shadow
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Draw phone screen background
+        ctx.fillStyle = '#ffffff';
+        roundRect(ctx, phoneX, phoneY, phoneW, phoneH, borderRadius);
+        ctx.fill();
+
+        // Clip and draw image
+        ctx.save();
+        roundRect(ctx, phoneX + 4, phoneY + 4, phoneW - 8, phoneH - 8, borderRadius - 4);
+        ctx.clip();
+        ctx.drawImage(img, phoneX + 4, phoneY + 4, phoneW - 8, phoneH - 8);
+        ctx.restore();
+
+        // Draw notch/Dynamic Island
+        ctx.fillStyle = '#000000';
+        const notchW = 200;
+        const notchH = 44;
+        const notchX = (CANVAS_W - notchW) / 2;
+        const notchY = phoneY + 14;
+        roundRect(ctx, notchX, notchY, notchW, notchH, 22);
+        ctx.fill();
+
+        // DRVN branding at bottom
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.font = 'bold 36px -apple-system, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('DRVN', CANVAS_W / 2, CANVAS_H - 120);
+
+        // Small tagline
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.font = '26px -apple-system, system-ui, sans-serif';
+        ctx.fillText('מערכת ניהול מוסך', CANVAS_W / 2, CANVAS_H - 70);
+    };
+    img.onerror = function() {
+        // If image fails to load, draw placeholder
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        const phoneW = 900;
+        const phoneH = 1860;
+        const phoneX = (CANVAS_W - phoneW) / 2;
+        const phoneY = 550;
+        roundRect(ctx, phoneX, phoneY, phoneW, phoneH, 60);
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.font = '40px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Screenshot not found', CANVAS_W / 2, phoneY + phoneH / 2);
+        ctx.fillText('Place screenshots in /screenshots/', CANVAS_W / 2, phoneY + phoneH / 2 + 60);
+    };
+    img.src = config.imageSrc;
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+}
+
+function downloadCanvas(canvasId, filename) {
+    const canvas = document.getElementById(canvasId);
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+}
+
+function downloadAll() {
+    screenshots.forEach((config, index) => {
+        setTimeout(() => {
+            downloadCanvas(config.canvasId, `drvn-screenshot-${index + 1}.png`);
+        }, index * 500);
+    });
+}
+
+function copyField(fieldId) {
+    const field = document.getElementById(fieldId);
+    navigator.clipboard.writeText(field.value).then(() => {
+        const btn = field.parentElement.querySelector('.copy-btn');
+        const original = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.style.background = '#10b981';
+        setTimeout(() => { btn.textContent = original; btn.style.background = '#f59e0b'; }, 1500);
+    });
+}
+
+function copyReviewNotes() {
+    const text = document.getElementById('reviewNotes').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.review-notes .copy-btn');
+        const original = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.style.background = '#10b981';
+        setTimeout(() => { btn.textContent = original; btn.style.background = '#f59e0b'; }, 1500);
+    });
+}
+
+// Generate all screenshots on load
+window.addEventListener('load', () => {
+    screenshots.forEach(config => drawScreenshot(config));
+});
+</script>
+
+</body>
+</html>

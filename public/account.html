@@ -4,19 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>החשבון שלי - מערכת ניהול מוסך</title>
-    
+    <!-- Updated: 2026-02-20 v3.4.9 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#f59e0b">
     <link rel="manifest" href="manifest.json">
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    
+
+    <!-- PayPal SDK (hidden on iOS native app) -->
+    <script>
+        if (!(window.webkit && window.webkit.messageHandlers)) {
+            var s = document.createElement('script');
+            s.src = 'https://www.paypal.com/sdk/js?client-id=ARdAW7Nq-GLrIHOmn42oibE9ostkd5s06n7jjR43MkgtDpR7M2pT1vTG_QM3wiWiuaXYOPpKYceF0IcO&currency=ILS';
+            document.head.appendChild(s);
+        }
+    </script>
+
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -45,7 +58,7 @@
             background: #ef4444;
             color: white;
         }
-        
+
         @keyframes slideDown {
             from {
                 opacity: 0;
@@ -56,7 +69,7 @@
                 transform: translate(-50%, 0);
             }
         }
-        
+
         @keyframes slideUp {
             from {
                 opacity: 1;
@@ -97,19 +110,19 @@
         <!-- Subscription Status Card -->
         <div class="card p-8 mb-6">
             <h2 class="text-2xl font-bold mb-6 text-center">סטטוס מנוי</h2>
-            
+
             <div class="text-center mb-6">
                 <span id="statusBadge" class="status-badge status-trial">בוחן מצב...</span>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <!-- User Info -->
-                <div class="bg-gray-50 p-6 rounded-lg">
+                <div class="bg-gray-50 p-6 rounded-lg" style="overflow: hidden; min-width: 0;">
                     <div class="flex items-center gap-3 mb-4">
                         <span class="text-3xl">👤</span>
-                        <div>
+                        <div style="min-width: 0; flex: 1;">
                             <p class="text-sm text-gray-600">חשבון</p>
-                            <p id="userEmail" class="font-bold text-gray-800">טוען...</p>
+                            <p id="userEmail" class="font-bold text-gray-800" style="word-break: break-all; overflow-wrap: break-word; font-size: 0.9rem;">טוען...</p>
                         </div>
                     </div>
                 </div>
@@ -131,6 +144,57 @@
 
             <!-- Action Button -->
             <div id="actionArea" class="text-center"></div>
+
+            <!-- PayPal Button Container -->
+            <div id="paypalSection" class="mt-6 hidden">
+                <h3 class="text-xl font-bold mb-4 text-center">💳 בחר תוכנית ושלם עם PayPal</h3>
+
+                <!-- Plan Selection -->
+                <div class="max-w-2xl mx-auto mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- 1 Month Plan -->
+                        <div id="plan-1month" onclick="selectPlan('1month')" class="plan-card cursor-pointer border-2 border-amber-500 bg-amber-50 p-4 rounded-xl text-center transition-all hover:shadow-lg">
+                            <div class="text-3xl mb-2">📅</div>
+                            <h4 class="font-bold text-lg">חודש אחד</h4>
+                            <p class="text-gray-600 text-sm mb-2">شهر واحد</p>
+                            <div class="text-2xl font-bold text-amber-600">₪200</div>
+                            <p class="text-gray-500 text-sm">₪200/חודש</p>
+                        </div>
+
+                        <!-- 2 Months Plan -->
+                        <div id="plan-2months" onclick="selectPlan('2months')" class="plan-card cursor-pointer border-2 border-gray-200 bg-white p-4 rounded-xl text-center transition-all hover:shadow-lg">
+                            <div class="text-3xl mb-2">📆</div>
+                            <h4 class="font-bold text-lg">חודשיים</h4>
+                            <p class="text-gray-600 text-sm mb-2">شهرين</p>
+                            <div class="text-2xl font-bold text-gray-700">₪400</div>
+                            <p class="text-gray-500 text-sm">₪200/חודש</p>
+                        </div>
+
+                        <!-- 1 Year Plan -->
+                        <div id="plan-1year" onclick="selectPlan('1year')" class="plan-card cursor-pointer border-2 border-gray-200 bg-white p-4 rounded-xl text-center transition-all hover:shadow-lg relative">
+                            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                                🔥 חיסכון 20%
+                            </div>
+                            <div class="text-3xl mb-2">🎉</div>
+                            <h4 class="font-bold text-lg">שנה</h4>
+                            <p class="text-gray-600 text-sm mb-2">سنة</p>
+                            <div class="text-2xl font-bold text-green-600">₪1,920</div>
+                            <p class="text-gray-400 text-sm line-through">₪2,400</p>
+                            <p class="text-green-600 text-sm font-bold">₪160/חודש</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="max-w-md mx-auto">
+                    <div id="selectedPlanInfo" class="bg-blue-50 border border-blue-200 p-3 rounded-lg mb-4 text-center">
+                        <p class="text-blue-800">נבחר: <strong>חודש אחד</strong> - <strong>₪200</strong></p>
+                    </div>
+                    <!-- PayPal Buttons will render here -->
+                    <div id="paypal-button-container"></div>
+                    <p class="text-gray-500 text-sm mt-3 text-center">תשלום מאובטח דרך PayPal - ניתן לשלם גם בכרטיס אשראי</p>
+                    <p class="text-green-600 text-sm mt-2 font-bold text-center">✅ המנוי יופעל אוטומטית אחרי התשלום!</p>
+                </div>
+            </div>
         </div>
 
         <!-- Payment History -->
@@ -140,6 +204,15 @@
                 <p class="text-gray-500 text-center">טוען...</p>
             </div>
         </div>
+
+        <!-- Account Deletion -->
+        <div class="card p-8 mt-6 border-t-4 border-red-200">
+            <h2 class="text-lg font-bold mb-3 text-red-600">מחיקת חשבון</h2>
+            <p class="text-gray-600 text-sm mb-4">מחיקת החשבון תסיר את כל הנתונים שלך לצמיתות, כולל רכבים, טיפולים ותורים. פעולה זו אינה ניתנת לביטול.</p>
+            <button onclick="deleteAccountFromPage()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-bold">
+                מחיקת חשבון
+            </button>
+        </div>
     </div>
 
     <script>
@@ -147,10 +220,42 @@
         let app, auth, db;
         let currentUser = null;
         let userSubscription = null;
-        
+
+        // Detect iOS native app (WKWebView) - hide PayPal on iOS
+        var isIOSApp = (window.webkit && window.webkit.messageHandlers) ? true : false;
+
         const PAYPAL_LINK = 'https://paypal.me/drvncars';
-        const SUBSCRIPTION_PRICE = 200; // ₪200
         const TRIAL_DAYS = 30;
+
+        // Subscription Plans
+        const SUBSCRIPTION_PLANS = {
+            '1month': {
+                months: 1,
+                price: 200,
+                originalPrice: 200,
+                discount: 0,
+                label: 'חודש אחד',
+                labelAr: 'شهر واحد'
+            },
+            '2months': {
+                months: 2,
+                price: 400,
+                originalPrice: 400,
+                discount: 0,
+                label: 'חודשיים',
+                labelAr: 'شهرين'
+            },
+            '1year': {
+                months: 12,
+                price: 1920,
+                originalPrice: 2400,
+                discount: 20,
+                label: 'שנה (חיסכון 20%!)',
+                labelAr: 'سنة (خصم 20%!)'
+            }
+        };
+
+        let selectedPlan = '1month';
 
         // Firebase Configuration (same as main app)
      const firebaseConfig = {
@@ -177,13 +282,13 @@
                 // User authenticated
                 currentUser = user;
                 document.getElementById('userEmail').textContent = user.email;
-                
+
                 // Setup real-time listener for subscription changes
                 setupSubscriptionListener();
             }
             document.getElementById('loadingScreen').classList.add('hidden');
         });
-        
+
         // Setup Real-time Subscription Listener
         function setupSubscriptionListener() {
             // Listen to real-time updates on user document
@@ -193,7 +298,7 @@
                         userSubscription = doc.data();
                         updateUI();
                         await loadPaymentHistory();
-                        
+
                         // Show notification if subscription was just activated
                         if (userSubscription.subscriptionStatus === 'active') {
                             const lastUpdate = userSubscription.lastPaymentDate;
@@ -218,20 +323,20 @@
                     console.error('Error listening to subscription:', error);
                 });
         }
-        
+
         // Show Notification
         function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
             notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-4 rounded-lg shadow-lg font-bold text-white ${
-                type === 'success' ? 'bg-green-500' : 
-                type === 'error' ? 'bg-red-500' : 
+                type === 'success' ? 'bg-green-500' :
+                type === 'error' ? 'bg-red-500' :
                 'bg-blue-500'
             }`;
             notification.textContent = message;
             notification.style.animation = 'slideDown 0.3s ease-out';
-            
+
             document.body.appendChild(notification);
-            
+
             setTimeout(() => {
                 notification.style.animation = 'slideUp 0.3s ease-in';
                 setTimeout(() => notification.remove(), 300);
@@ -246,7 +351,60 @@
             const messageArea = document.getElementById('messageArea');
             const actionArea = document.getElementById('actionArea');
 
-            // Check trial
+            // Check subscription (paid or admin-granted) - check BEFORE trial
+            let bestExpiry = null;
+            if (userSubscription.subscriptionExpiry) {
+                bestExpiry = new Date(userSubscription.subscriptionExpiry);
+            }
+            if (userSubscription.subscriptionEndDate) {
+                let endDate;
+                if (userSubscription.subscriptionEndDate.toDate) {
+                    endDate = userSubscription.subscriptionEndDate.toDate();
+                } else {
+                    endDate = new Date(userSubscription.subscriptionEndDate);
+                }
+                if (!bestExpiry || endDate > bestExpiry) {
+                    bestExpiry = endDate;
+                }
+            }
+
+            if (bestExpiry && bestExpiry > now) {
+                const expiry = bestExpiry;
+                const daysLeft = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
+
+                // Active subscription
+                statusBadge.className = 'status-badge status-active';
+                statusBadge.textContent = `✅ מנוי פעיל (${daysLeft} ימים נותרו)`;
+                expiryDate.textContent = expiry.toLocaleDateString('he-IL');
+
+                messageArea.innerHTML = `
+                    <div class="bg-green-50 border-r-4 border-green-500 p-4 mb-6">
+                        <p class="text-green-800">
+                            <strong>המנוי שלך פעיל!</strong><br>
+                            תוקף עד ${expiry.toLocaleDateString('he-IL')}.
+                        </p>
+                    </div>
+                `;
+
+                if (!isIOSApp) {
+                    if (daysLeft <= 7) {
+                        actionArea.innerHTML = `
+                            <button onclick="showPayPalButton()" class="bg-amber-500 hover:bg-amber-600 text-white px-8 py-4 rounded-lg font-bold text-xl">
+                                🔄 חדש מנוי מראש - בחר תוכנית
+                            </button>
+                        `;
+                    } else {
+                        actionArea.innerHTML = `
+                            <button onclick="showPayPalButton()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold text-lg">
+                                ➕ הארך מנוי - בחר תוכנית
+                            </button>
+                        `;
+                    }
+                }
+                return;
+            }
+
+            // Check trial (only if no active subscription)
             if (userSubscription.trialEndDate) {
                 const trialEnd = new Date(userSubscription.trialEndDate);
                 const daysLeft = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
@@ -256,7 +414,7 @@
                     statusBadge.className = 'status-badge status-trial';
                     statusBadge.textContent = `🎁 ניסיון חינם (${daysLeft} ימים נותרו)`;
                     expiryDate.textContent = trialEnd.toLocaleDateString('he-IL');
-                    
+
                     messageArea.innerHTML = `
                         <div class="bg-blue-50 border-r-4 border-blue-500 p-4 mb-6">
                             <p class="text-blue-800">
@@ -265,44 +423,21 @@
                             </p>
                         </div>
                     `;
-                    
-                    if (daysLeft <= 7) {
-                        actionArea.innerHTML = `
-                            <button onclick="initiatePayment()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg font-bold text-xl">
-                                💳 חדש מנוי עכשיו - ₪${SUBSCRIPTION_PRICE}/חודש
-                            </button>
-                        `;
-                    }
-                    return;
-                }
-            }
 
-            // Check paid subscription
-            if (userSubscription.isPaid && userSubscription.subscriptionExpiry) {
-                const expiry = new Date(userSubscription.subscriptionExpiry);
-                const daysLeft = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
-
-                if (now < expiry) {
-                    // Active subscription
-                    statusBadge.className = 'status-badge status-active';
-                    statusBadge.textContent = `✅ מנוי פעיל (${daysLeft} ימים נותרו)`;
-                    expiryDate.textContent = expiry.toLocaleDateString('he-IL');
-                    
-                    messageArea.innerHTML = `
-                        <div class="bg-green-50 border-r-4 border-green-500 p-4 mb-6">
-                            <p class="text-green-800">
-                                <strong>המנוי שלך פעיל!</strong><br>
-                                תוקף עד ${expiry.toLocaleDateString('he-IL')}.
-                            </p>
-                        </div>
-                    `;
-                    
-                    if (daysLeft <= 7) {
-                        actionArea.innerHTML = `
-                            <button onclick="initiatePayment()" class="bg-amber-500 hover:bg-amber-600 text-white px-8 py-4 rounded-lg font-bold text-xl">
-                                🔄 חדש מנוי מראש - ₪${SUBSCRIPTION_PRICE}/חודש
-                            </button>
-                        `;
+                    if (!isIOSApp) {
+                        if (daysLeft <= 7) {
+                            actionArea.innerHTML = `
+                                <button onclick="showPayPalButton()" class="bg-amber-500 hover:bg-amber-600 text-white px-8 py-4 rounded-lg font-bold text-xl">
+                                    💳 חדש מנוי עכשיו - בחר תוכנית
+                                </button>
+                            `;
+                        } else {
+                            actionArea.innerHTML = `
+                                <button onclick="showPayPalButton()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold text-lg">
+                                    💳 הירשם למנוי - בחר תוכנית
+                                </button>
+                            `;
+                        }
                     }
                     return;
                 }
@@ -312,7 +447,7 @@
             statusBadge.className = 'status-badge status-expired';
             statusBadge.textContent = '⚠️ המנוי פג תוקף';
             expiryDate.textContent = 'לא פעיל';
-            
+
             messageArea.innerHTML = `
                 <div class="bg-red-50 border-r-4 border-red-500 p-4 mb-6">
                     <p class="text-red-800">
@@ -322,12 +457,15 @@
                     </p>
                 </div>
             `;
-            
-            actionArea.innerHTML = `
-                <button onclick="initiatePayment()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg font-bold text-xl animate-pulse">
-                    💳 חדש מנוי עכשיו - ₪${SUBSCRIPTION_PRICE}/חודש
-                </button>
-            `;
+
+            if (!isIOSApp) {
+                actionArea.innerHTML = `
+                    <p class="text-gray-600 mb-4">בחר אמצעי תשלום:</p>
+                `;
+
+                // Show PayPal button section
+                showPayPalButton();
+            }
         }
 
         // Initiate Payment
@@ -338,7 +476,7 @@
                     .where('userId', '==', currentUser.uid)
                     .where('status', 'in', ['pending', 'confirmed'])
                     .get();
-                
+
                 if (!pendingPayments.empty) {
                     alert(
                         '⚠️ יש לך כבר בקשת תשלום פעילה!\n\n' +
@@ -351,13 +489,13 @@
             } catch (error) {
                 console.error('Error checking pending payments:', error);
             }
-            
+
             const confirmed = confirm(
                 `האם אתה מוכן לשלם ₪${SUBSCRIPTION_PRICE} עבור חודש אחד?\n\n` +
                 `תועבר ל-PayPal לביצוע התשלום.\n` +
                 `לאחר התשלום, תחזור לכאן והמנוי יופעל.`
             );
-            
+
             if (!confirmed) return;
 
             // Create payment record
@@ -392,10 +530,10 @@
         function redirectToPayPal(paymentId) {
             // PayPal.me link with amount (200 ILS)
             const paypalUrl = `${PAYPAL_LINK}/${SUBSCRIPTION_PRICE}ILS`;
-            
+
             // Store payment ID for verification
             localStorage.setItem('pendingPayment', paymentId);
-            
+
             // Show instructions
             const confirmed = confirm(
                 `עכשיו תועבר ל-PayPal לתשלום.\n\n` +
@@ -407,7 +545,7 @@
                 `3. המנוי שלך יופעל תוך 24 שעות\n\n` +
                 `האם להמשיך ל-PayPal?`
             );
-            
+
             if (confirmed) {
                 // Redirect directly to PayPal (won't be blocked)
                 window.location.href = paypalUrl;
@@ -421,14 +559,14 @@
         function showPaymentConfirmation(paymentId) {
             const actionArea = document.getElementById('actionArea');
             const manualPaypalUrl = `${PAYPAL_LINK}/${SUBSCRIPTION_PRICE}ILS`;
-            
+
             actionArea.innerHTML = `
                 <div class="bg-blue-50 border-2 border-blue-500 p-6 rounded-lg mb-4">
                     <p class="text-blue-800 mb-4">
                         <strong>האם ביצעת את התשלום ב-PayPal?</strong><br>
                         מזהה תשלום: <code class="bg-blue-100 px-2 py-1 rounded">${paymentId}</code>
                     </p>
-                    
+
                     <div class="bg-yellow-50 border border-yellow-300 p-4 rounded-lg mb-4 text-right">
                         <p class="text-yellow-800 text-sm mb-2">
                             ⚠️ אם החלון לא נפתח, לחץ כאן:
@@ -443,7 +581,7 @@
                             📱 חשוב: אחרי התשלום, שלח צילום מסך + מספר עסקה: ${paymentId}
                         </p>
                     </div>
-                    
+
                     <button onclick="confirmPayment('${paymentId}')" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold w-full">
                         ✅ כן, אישרתי את התשלום
                     </button>
@@ -517,7 +655,7 @@
                 historyDiv.innerHTML = html;
             } catch (error) {
                 console.error('Error loading payment history:', error);
-                document.getElementById('paymentHistory').innerHTML = 
+                document.getElementById('paymentHistory').innerHTML =
                     '<p class="text-red-500 text-center">שגיאה בטעינת ההיסטוריה</p>';
             }
         }
@@ -553,6 +691,149 @@
             }
         }
 
+        // Select Subscription Plan
+        function selectPlan(planId) {
+            selectedPlan = planId;
+            const plan = SUBSCRIPTION_PLANS[planId];
+
+            // Update UI - remove selection from all
+            document.querySelectorAll('.plan-card').forEach(card => {
+                card.classList.remove('border-amber-500', 'bg-amber-50');
+                card.classList.add('border-gray-200', 'bg-white');
+            });
+
+            // Add selection to chosen plan
+            const selectedCard = document.getElementById(`plan-${planId}`);
+            if (selectedCard) {
+                selectedCard.classList.remove('border-gray-200', 'bg-white');
+                selectedCard.classList.add('border-amber-500', 'bg-amber-50');
+            }
+
+            // Update info text
+            const infoDiv = document.getElementById('selectedPlanInfo');
+            if (infoDiv) {
+                const priceFormatted = plan.price.toLocaleString('he-IL');
+                infoDiv.innerHTML = `<p class="text-blue-800">נבחר: <strong>${plan.label}</strong> - <strong>₪${priceFormatted}</strong></p>`;
+            }
+
+            // Re-render PayPal buttons with new amount
+            const container = document.getElementById('paypal-button-container');
+            if (container) {
+                container.innerHTML = '';
+                paypalInitialized = false;
+                initPayPalButtons();
+            }
+        }
+
+        // Show PayPal button when subscription expired or trial ending
+        function showPayPalButton() {
+            const paypalSection = document.getElementById('paypalSection');
+            if (paypalSection) {
+                paypalSection.classList.remove('hidden');
+                // Initialize with default plan
+                selectPlan('1month');
+            }
+        }
+
+        // Initialize PayPal Buttons
+        let paypalInitialized = false;
+        function initPayPalButtons() {
+            if (paypalInitialized) return;
+            if (typeof paypal === 'undefined') {
+                setTimeout(initPayPalButtons, 500);
+                return;
+            }
+
+            const plan = SUBSCRIPTION_PLANS[selectedPlan];
+            const planDescription = `DRVN Premium - ${plan.label} (${plan.months} חודשים)`;
+
+            paypal.Buttons({
+                style: {
+                    layout: 'vertical',
+                    color: 'blue',
+                    shape: 'rect',
+                    label: 'pay'
+                },
+                createOrder: function(data, actions) {
+                    return actions.order.create({
+                        purchase_units: [{
+                            description: planDescription,
+                            amount: {
+                                currency_code: 'ILS',
+                                value: plan.price.toFixed(2)
+                            }
+                        }]
+                    });
+                },
+                onApprove: function(data, actions) {
+                    return actions.order.capture().then(async function(details) {
+                        console.log('Payment completed:', details);
+
+                        // Save payment with plan details
+                        try {
+                            await db.collection('paypal_payments').add({
+                                orderId: details.id,
+                                payerId: details.payer.payer_id,
+                                payerEmail: details.payer.email_address,
+                                payerName: `${details.payer.name.given_name} ${details.payer.name.surname}`,
+                                amount: plan.price,
+                                currency: 'ILS',
+                                planId: selectedPlan,
+                                planMonths: plan.months,
+                                planLabel: plan.label,
+                                discount: plan.discount,
+                                originalPrice: plan.originalPrice,
+                                status: details.status,
+                                userId: currentUser.uid,
+                                userEmail: currentUser.email,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                rawDetails: JSON.stringify(details)
+                            });
+
+                            // Update user subscription
+                            const now = new Date();
+                            let expiryDate = new Date();
+
+                            // Check if user has existing subscription
+                            if (userSubscription && userSubscription.subscriptionExpiry) {
+                                const currentExpiry = new Date(userSubscription.subscriptionExpiry);
+                                if (currentExpiry > now) {
+                                    // Add months to existing expiry
+                                    expiryDate = new Date(currentExpiry);
+                                }
+                            }
+
+                            // Add plan months
+                            expiryDate.setMonth(expiryDate.getMonth() + plan.months);
+
+                            await db.collection('users').doc(currentUser.uid).update({
+                                isPaid: true,
+                                subscriptionStatus: 'active',
+                                subscriptionExpiry: expiryDate.toISOString(),
+                                lastPaymentDate: firebase.firestore.FieldValue.serverTimestamp(),
+                                lastPaymentAmount: plan.price,
+                                lastPlanId: selectedPlan,
+                                lastPlanMonths: plan.months
+                            });
+
+                            console.log('User subscription updated');
+                        } catch (error) {
+                            console.error('Error saving payment:', error);
+                        }
+
+                        alert(`🎉 התשלום בוצע בהצלחה!\n\nנרכש: ${plan.label}\nסכום: ₪${plan.price}\n\nהמנוי שלך יופעל תוך מספר שניות.`);
+                        setTimeout(() => location.reload(), 2000);
+                    });
+                },
+                onError: function(err) {
+                    console.error('PayPal error:', err);
+                    alert('❌ שגיאה בתשלום. אנא נסה שוב.');
+                }
+            }).render('#paypal-button-container');
+
+            paypalInitialized = true;
+        }
+
         // Check for pending payment on load
         window.addEventListener('load', () => {
             const pendingPayment = localStorage.getItem('pendingPayment');
@@ -569,6 +850,49 @@
                 }, 1000);
             }
         });
+
+        // Delete account function for account page
+        function deleteAccountFromPage() {
+            if (!currentUser) return;
+
+            var confirmed = confirm('האם אתה בטוח שברצונך למחוק את החשבון?\nכל הנתונים יימחקו לצמיתות ולא ניתן לשחזר אותם.');
+            if (!confirmed) return;
+
+            var emailConfirm = prompt('לאישור סופי, הקלד את כתובת האימייל שלך:');
+            if (!emailConfirm || emailConfirm.trim().toLowerCase() !== currentUser.email.toLowerCase()) {
+                alert('האימייל לא תואם. המחיקה בוטלה.');
+                return;
+            }
+
+            var userId = currentUser.uid;
+
+            db.collection('users').doc(userId).delete()
+                .then(function() {
+                    return db.collection('cars').where('userId', '==', userId).get();
+                })
+                .then(function(snapshot) {
+                    var batch = db.batch();
+                    snapshot.forEach(function(doc) {
+                        batch.delete(doc.ref);
+                    });
+                    return batch.commit();
+                })
+                .then(function() {
+                    return currentUser.delete();
+                })
+                .then(function() {
+                    alert('החשבון נמחק בהצלחה.');
+                    window.location.href = '/';
+                })
+                .catch(function(error) {
+                    console.error('Error deleting account:', error);
+                    if (error.code === 'auth/requires-recent-login') {
+                        alert('יש להתחבר מחדש לפני מחיקת החשבון. אנא התנתק והתחבר שוב.');
+                    } else {
+                        alert('שגיאה במחיקת החשבון: ' + error.message);
+                    }
+                });
+        }
     </script>
 </body>
 </html>

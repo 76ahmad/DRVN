@@ -614,6 +614,9 @@
                         <button onclick="switchTab('stats')" id="statsTab" class="tab-button">
                             📊 דוחות והכנסות
                         </button>
+                        <button onclick="switchTab('paypal')" id="paypalTab" class="tab-button">
+                            💳 PayPal
+                        </button>
                     </nav>
                 </div>
 
@@ -691,6 +694,60 @@
                             <tbody id="usersTableBody" class="divide-y divide-gray-100 bg-white">
                                 <tr>
                                     <td colspan="7" class="px-6 py-12 text-center">
+                                        <div class="text-5xl mb-3 animate-pulse-slow">⏳</div>
+                                        <p class="text-gray-500 font-medium">טוען נתונים...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- PayPal Payments Tab -->
+                <div id="paypalContent" class="p-6 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800 mb-1">💳 תשלומי PayPal</h2>
+                            <p class="text-gray-500 text-sm">כל התשלומים שהתקבלו דרך PayPal</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="refreshPayPalPayments()" class="btn-primary" style="padding: 10px 20px; font-size: 13px;">
+                                🔄 רענן
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- PayPal Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
+                            <p class="text-blue-600 text-sm font-semibold">סה״כ תשלומים</p>
+                            <p id="totalPayPalPayments" class="text-2xl font-bold text-blue-800">0</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
+                            <p class="text-green-600 text-sm font-semibold">סה״כ הכנסות</p>
+                            <p id="totalPayPalRevenue" class="text-2xl font-bold text-green-800">₪0</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
+                            <p class="text-purple-600 text-sm font-semibold">החודש</p>
+                            <p id="monthlyPayPalRevenue" class="text-2xl font-bold text-purple-800">₪0</p>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-gray-100">
+                        <table class="w-full">
+                            <thead class="table-header">
+                                <tr>
+                                    <th class="px-6 py-4 text-right">תאריך</th>
+                                    <th class="px-6 py-4 text-right">משתמש</th>
+                                    <th class="px-6 py-4 text-right">אימייל PayPal</th>
+                                    <th class="px-6 py-4 text-right">סכום</th>
+                                    <th class="px-6 py-4 text-right">מזהה עסקה</th>
+                                    <th class="px-6 py-4 text-right">סטטוס</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paypalTableBody" class="divide-y divide-gray-100 bg-white">
+                                <tr>
+                                    <td colspan="6" class="px-6 py-12 text-center">
                                         <div class="text-5xl mb-3 animate-pulse-slow">⏳</div>
                                         <p class="text-gray-500 font-medium">טוען נתונים...</p>
                                     </td>
@@ -821,29 +878,38 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Admin emails - Only these emails can access admin panel
-        const ADMIN_EMAILS = [
-            "admin@drvn.com",
-            "h-26-7@hotmail.com"
-        ];
-
         let allUsers = [];
         let allPayments = [];
+        let allPayPalPayments = [];
         let currentAdminUser = null;
-        
+
+        // Check if user is admin from Firestore
+        async function checkIsAdmin(uid) {
+            try {
+                const userDoc = await db.collection('users').doc(uid).get();
+                return userDoc.exists && userDoc.data().isAdmin === true;
+            } catch (e) {
+                console.error('Error checking admin status:', e);
+                return false;
+            }
+        }
+
         // Version Check
-        console.log('%c🚗 DRVN Admin Dashboard v3.2', 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 20px; font-size: 16px; font-weight: bold; border-radius: 8px;');
+        console.log('%c🚗 DRVN Admin Dashboard v3.3', 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 20px; font-size: 16px; font-weight: bold; border-radius: 8px;');
         console.log('%c✅ Real-time Updates Active', 'color: #10b981; font-weight: bold;');
         console.log('%c🔔 Notifications System Ready', 'color: #3b82f6; font-weight: bold;');
         console.log('%cTo test notifications: testNotifications()', 'color: #f59e0b; font-style: italic;');
 
         // Check if user is already logged in
         auth.onAuthStateChanged(async (user) => {
-            if (user && ADMIN_EMAILS.includes(user.email)) {
-                currentAdminUser = user;
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('adminDashboard').classList.remove('hidden');
-                loadDashboardData();
+            if (user) {
+                const userIsAdmin = await checkIsAdmin(user.uid);
+                if (userIsAdmin) {
+                    currentAdminUser = user;
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('adminDashboard').classList.remove('hidden');
+                    loadDashboardData();
+                }
             }
         });
 
@@ -853,19 +919,23 @@
             const password = document.getElementById('adminPassword').value;
             const errorDiv = document.getElementById('loginError');
 
-            if (!ADMIN_EMAILS.includes(email)) {
-                errorDiv.textContent = '❌ אין לך הרשאות ניהול! (ليس لديك صلاحيات إدارة)';
-                errorDiv.classList.remove('hidden');
-                return;
-            }
-
             try {
                 await auth.signInWithEmailAndPassword(email, password);
+
+                // Check admin status from Firestore
+                const userIsAdmin = await checkIsAdmin(auth.currentUser.uid);
+                if (!userIsAdmin) {
+                    errorDiv.textContent = '❌ אין לך הרשאות ניהול! (ليس لديك صلاحيات إدارة)';
+                    errorDiv.classList.remove('hidden');
+                    await auth.signOut();
+                    return;
+                }
+
                 currentAdminUser = auth.currentUser;
-                
+
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('adminDashboard').classList.remove('hidden');
-                
+
                 loadDashboardData();
             } catch (error) {
                 let errorMessage = '❌ שגיאה: ';
@@ -900,7 +970,8 @@
             // تحميل البيانات - الإحصائيات تتحدث تلقائياً عبر updateStats
             await Promise.all([
                 loadPayments(),
-                loadUsers()
+                loadUsers(),
+                loadPayPalPayments()
             ]);
         }
 
@@ -1332,9 +1403,12 @@
                 const userData = userDoc.data();
                 
                 let newEndDate;
+                const now = new Date();
                 if (userData.subscriptionEndDate) {
                     const currentEndDate = userData.subscriptionEndDate.toDate();
-                    newEndDate = new Date(currentEndDate);
+                    // If subscription already expired, start from today instead of old date
+                    const startFrom = currentEndDate > now ? currentEndDate : now;
+                    newEndDate = new Date(startFrom);
                     newEndDate.setDate(newEndDate.getDate() + daysNum);
                 } else {
                     newEndDate = new Date();
@@ -1442,18 +1516,116 @@
             }
         }
 
-        // Switch Tab
+        // ==================== PayPal Payments ====================
+
+        // Load PayPal Payments
+        async function loadPayPalPayments() {
+            try {
+                db.collection('paypal_payments')
+                    .orderBy('createdAt', 'desc')
+                    .limit(100)
+                    .onSnapshot(snapshot => {
+                        allPayPalPayments = [];
+                        snapshot.forEach(doc => {
+                            allPayPalPayments.push({ id: doc.id, ...doc.data() });
+                        });
+
+                        console.log('✅ PayPal payments loaded:', allPayPalPayments.length);
+                        displayPayPalPayments(allPayPalPayments);
+                        updatePayPalStats();
+                    }, error => {
+                        console.log('No PayPal payments collection yet:', error.message);
+                        displayPayPalPayments([]);
+                    });
+            } catch (error) {
+                console.error('Error loading PayPal payments:', error);
+            }
+        }
+
+        // Display PayPal Payments
+        function displayPayPalPayments(payments) {
+            const tbody = document.getElementById('paypalTableBody');
+
+            if (payments.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <div class="text-5xl mb-3">💳</div>
+                            <p class="text-gray-500 font-medium">אין תשלומי PayPal עדיין</p>
+                            <p class="text-gray-400 text-sm mt-2">תשלומים יופיעו כאן אחרי שמשתמשים ישלמו דרך PayPal</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = payments.map(payment => {
+                const date = payment.createdAt && payment.createdAt.toDate ?
+                    new Date(payment.createdAt.toDate()).toLocaleDateString('he-IL', {
+                        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    }) : 'N/A';
+
+                const statusBadge = payment.status === 'completed'
+                    ? '<span class="badge badge-active">✅ הושלם</span>'
+                    : '<span class="badge badge-pending">⏳ ממתין</span>';
+
+                return `
+                    <tr class="payment-row bg-white">
+                        <td class="px-6 py-4 text-sm font-medium text-gray-700">${date}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">${payment.userEmail || 'N/A'}</td>
+                        <td class="px-6 py-4 text-sm text-blue-600">${payment.payerEmail || 'N/A'}</td>
+                        <td class="px-6 py-4 text-sm font-bold text-green-700">₪${payment.amount || '200'}</td>
+                        <td class="px-6 py-4 text-xs font-mono text-gray-500">${payment.transactionId ? payment.transactionId.substring(0, 15) + '...' : 'N/A'}</td>
+                        <td class="px-6 py-4">${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Update PayPal Stats
+        function updatePayPalStats() {
+            const totalPayments = allPayPalPayments.length;
+            let totalRevenue = 0;
+            let monthlyRevenue = 0;
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+
+            allPayPalPayments.forEach(payment => {
+                const amount = parseFloat(payment.amount) || 200;
+                totalRevenue += amount;
+
+                if (payment.createdAt && payment.createdAt.toDate) {
+                    const paymentDate = payment.createdAt.toDate();
+                    if (paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear) {
+                        monthlyRevenue += amount;
+                    }
+                }
+            });
+
+            document.getElementById('totalPayPalPayments').textContent = totalPayments;
+            document.getElementById('totalPayPalRevenue').textContent = '₪' + totalRevenue.toLocaleString();
+            document.getElementById('monthlyPayPalRevenue').textContent = '₪' + monthlyRevenue.toLocaleString();
+        }
+
+        // Refresh PayPal Payments
+        function refreshPayPalPayments() {
+            loadPayPalPayments();
+            showNotification('info', 'רענון', 'נתוני PayPal מתעדכנים...');
+        }
+
         // Switch Tab
         function switchTab(tab) {
             // إخفاء جميع الـ tabs
             document.getElementById('paymentsTab').className = 'tab-button';
             document.getElementById('usersTab').className = 'tab-button';
             document.getElementById('statsTab').className = 'tab-button';
-            
+            document.getElementById('paypalTab').className = 'tab-button';
+
             document.getElementById('paymentsContent').classList.add('hidden');
             document.getElementById('usersContent').classList.add('hidden');
             document.getElementById('statsContent').classList.add('hidden');
-            
+            document.getElementById('paypalContent').classList.add('hidden');
+
             // إظهار الـ tab المختار
             if (tab === 'payments') {
                 document.getElementById('paymentsTab').className = 'tab-button active';
@@ -1464,7 +1636,11 @@
             } else if (tab === 'stats') {
                 document.getElementById('statsTab').className = 'tab-button active';
                 document.getElementById('statsContent').classList.remove('hidden');
-                updateDetailedStats(); // تحديث الإحصائيات المفصلة
+                updateDetailedStats();
+            } else if (tab === 'paypal') {
+                document.getElementById('paypalTab').className = 'tab-button active';
+                document.getElementById('paypalContent').classList.remove('hidden');
+                loadPayPalPayments();
             }
         }
 

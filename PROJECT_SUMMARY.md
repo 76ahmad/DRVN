@@ -9,9 +9,11 @@
 - Browser (PWA)
 - Android app via Median.co
 
-**Current Version:** v2.2.0-new-onesignal
+**Current Version:** v3.7.1
 
-**Working Directory:** `C:/Users/h_26_/Desktop/garage-v2`
+**Working Directory:** `C:/Users/h_26_/Desktop/New folder (3)/garage-v2`
+
+**GitHub Repository:** https://github.com/76ahmad/DRVN.git
 
 ---
 
@@ -306,6 +308,121 @@ firebase functions:log --project garage-17263
 **Problem:** Timing issue - Median SDK not ready
 **Solution:** Added retry mechanism with 5 attempts and 2 second delays
 
+### 4. Mobile UI Improvements (v2.3.x)
+
+#### 4.1 Car Image Placeholder Too Large on Mobile
+**Problem:** "אין תמונה" placeholder was taking too much space on mobile
+**Solution:** Changed aspect-ratio from 16/9 to 3/1 on mobile (max-width: 768px)
+```css
+@media (max-width: 768px) {
+    .car-image-placeholder {
+        aspect-ratio: 3/1;
+        padding: 1rem;
+    }
+}
+```
+
+#### 4.2 Search Bar and Bottom Nav Hide on Scroll
+**Problem:** User wanted more screen space while scrolling
+**Solution:** Added scroll event listener that hides/shows search bar and bottom nav
+- Scrolling down → hides both
+- Scrolling up → shows both
+- Uses requestAnimationFrame for performance
+- Uses CSS transitions for smooth animation
+
+**CSS Classes Added:**
+```css
+.search-container.hidden-scroll {
+    opacity: 0;
+    max-height: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.mobile-bottom-nav.hidden-scroll {
+    transform: translateY(100%) !important;
+}
+```
+
+**JavaScript Added (scroll event handler):**
+```javascript
+let lastScrollY = 0;
+let ticking = false;
+const scrollThreshold = 10;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            if (window.innerWidth <= 768) {
+                const currentScrollY = window.scrollY;
+                const scrollDiff = currentScrollY - lastScrollY;
+                const atTop = currentScrollY <= 10;
+                const atBottom = (window.innerHeight + currentScrollY) >= (document.body.scrollHeight - 10);
+
+                if (atTop) {
+                    // Always show at top
+                    searchContainer.classList.remove('hidden-scroll');
+                    bottomNav.classList.remove('hidden-scroll');
+                } else if (atBottom && Math.abs(scrollDiff) < 30) {
+                    // Ignore small movements at bottom
+                    return;
+                } else if (Math.abs(scrollDiff) >= scrollThreshold) {
+                    if (scrollDiff > 0) {
+                        // Scrolling down - hide
+                        searchContainer.classList.add('hidden-scroll');
+                        bottomNav.classList.add('hidden-scroll');
+                    } else {
+                        // Scrolling up - show
+                        searchContainer.classList.remove('hidden-scroll');
+                        bottomNav.classList.remove('hidden-scroll');
+                    }
+                }
+                lastScrollY = currentScrollY;
+            }
+            ticking = false;
+        });
+        ticking = true;
+    }
+}, { passive: true });
+```
+
+#### 4.3 Scroll Glitch at Top/Bottom of Page (v2.3.3-bounce-fix)
+**Problem:** Bars were flickering 3-4 times rapidly when reaching top or bottom of page
+**Solution:**
+- Added `atTop` detection (currentScrollY <= 10) - always show bars
+- Added `atBottom` detection - ignore small movements (< 30px)
+- Added scrollThreshold (10px) to ignore tiny scroll movements
+
+#### 4.4 Modal Background Interaction Issue
+**Problem:** When opening a modal (פרטים, etc.), user could still interact with elements behind it
+**Solution:**
+1. Added `document.body.classList.add('modal-open')` when opening any modal
+2. Added `document.body.classList.remove('modal-open')` when closing
+3. Added CSS to disable background interaction:
+```css
+body.modal-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+}
+
+body.modal-open #mainApp,
+body.modal-open #carsGrid,
+body.modal-open .mobile-bottom-nav {
+    pointer-events: none !important;
+}
+```
+
+**Modals Updated:**
+- `carDetailsModal` (viewCarDetails / closeCarDetailsModal)
+- `carModal` (openCarModal / closeCarModal)
+- `maintenanceModal` (openMaintenanceModal / closeMaintenanceModal)
+- `calendarModal` (openCalendar / closeCalendarModal)
+- `appointmentModal` (openAppointmentModal / closeAppointmentModal)
+
 ---
 
 ## Pending Tasks
@@ -318,12 +435,21 @@ firebase functions:log --project garage-17263
 - Need to link developer account to German payment profile
 - Or provide identity documents matching Israel address
 
-### 2. Potential Future Improvements
+### 2. Card Design Improvements (User exploring options)
+**Status:** User tried two new card designs but preferred the original
+- **Design 1 (Electric Vehicle Style):** Cyan/teal colored icons and buttons with info grid - User said "3 colors is too much" (gold, white, cyan)
+- **Design 2 (Classic Simple):** Minimal cards with tags - User said "doesn't look good"
+- **Current:** Reverted to original design with black border and colored buttons (green/amber/red)
+
+**User wants:** A design "comfortable for eyes like other apps" - may need more exploration
+
+### 3. Potential Future Improvements
 - Employee notifications
 - Reports and statistics
 - Invoice system
 - Google Calendar integration
 - Multi-language support
+- Better card design (user is exploring Dribbble for inspiration)
 
 ---
 
@@ -386,5 +512,1977 @@ C:/Users/h_26_/Desktop/garage-final
 
 ---
 
-*Last Updated: February 2026*
+---
+
+## Session Notes (Latest Session - February 2026)
+
+### What Was Done This Session:
+
+1. **Uploaded project to GitHub**
+   - Repository: git@github.com:76ahmad/DRVN.git
+   - Had to use HTTPS instead of SSH due to permission issues
+
+2. **Mobile UI Testing & Improvements**
+   - Set up local Firebase server on port 5000
+   - Used Chrome browser automation to test mobile viewport (390x844)
+   - Made car image placeholder smaller on mobile
+   - Added hide-on-scroll for search bar and bottom nav
+   - Fixed scroll glitch at page boundaries (bounce effect)
+
+3. **Fixed Modal Interaction Bug**
+   - User reported being able to click elements behind open modals
+   - Added `modal-open` class to body when any modal opens
+   - Added CSS `pointer-events: none` for background elements
+
+4. **Tried New Card Designs (Reverted)**
+   - Explored Dribbble for inspiration (garage apps, car service apps)
+   - Implemented "Electric Vehicle Style" - user didn't like multiple colors
+   - Implemented "Classic Simple Style" - user didn't like it
+   - **Reverted to original design** - user prefers it for now
+
+### Current State:
+- App is deployed and working at https://garage-17263.web.app
+- Original card design is active
+- All mobile UI improvements are live (scroll hide, smaller placeholders, modal fix)
+- User may want to explore more designs in the future
+
+### Files Modified:
+- `public/index.html` - All CSS and JS changes for mobile UI
+
+---
+
+## Session Notes (v2.4.0 - February 4, 2026)
+
+### Mobile Performance Optimizations
+
+#### CSS Performance Improvements:
+1. **GPU Acceleration** - Added `will-change: transform` and `translateZ(0)` for animated elements
+2. **Disabled backdrop-filter on mobile** - Was causing slowness
+3. **Lighter shadows on mobile** - Reduced from complex shadows to simple ones
+4. **Faster transitions** - Changed from 0.3s to 0.15s on mobile
+5. **Removed hover effects on touch devices** - Not needed and improves performance
+6. **Added `content-visibility: auto`** for cards - Improves rendering
+7. **Added `contain: layout style paint`** for fixed elements
+8. **Disabled ripple effect on mobile** - For faster button response
+
+```css
+/* Key CSS additions */
+@media (max-width: 768px) {
+    .glass, .modal-backdrop {
+        backdrop-filter: none !important;
+    }
+    .card {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+    }
+    .card, .btn, .nav-item {
+        transition-duration: 0.15s !important;
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .btn::before {
+        display: none !important; /* Remove ripple */
+    }
+}
+```
+
+#### JavaScript Performance Improvements:
+1. **Optimized scroll handler** - Added DOM element caching
+2. **Added `is-scrolling` class** - Disables animations during scroll
+3. **Debounced scroll end detection**
+4. **Used `requestIdleCallback`** for non-critical updates
+5. **Added passive touch listeners** - Better touch response
+6. **Automatic lazy loading for images**
+
+### Modal Redesigns (Mobile-First)
+
+#### Car Modal (הוספת רכב) - Completely Redesigned:
+- **Fixed header** with close button (left), title (center), save button (right)
+- **Compact image upload** - Horizontal row instead of large box
+- **Fields in 2 columns** - Name+Phone, Type+Model, Year+Engine, etc.
+- **Full screen on mobile** - No rounded corners, uses entire viewport
+- **Bottom bar hidden** when modal is open
+
+#### Maintenance Modal (הוספת טיפול) - Completely Redesigned:
+- Same header pattern as car modal
+- **Only 2 required fields**: Date + Part Name
+- **Optional fields**: Kilometers, Cost, Description, Photos
+- **Compact photo upload** button
+- **Fields rearranged**: Date+Part (required row), KM+Cost (optional row)
+
+#### Car Details Modal (פרטים) - Improved:
+- **Fixed header** that stays above content when scrolling
+- **z-index: 20** on header to prevent image overlap
+- **Bottom bar hidden** when modal is open
+- **Added `hideUIElements()` / `showUIElements()`** calls
+
+### Bug Fixes:
+
+1. **Bottom bar not hiding on modals**
+   - Added `!important` and `opacity: 0` to `.mobile-bottom-nav.hide-on-modal`
+
+2. **Image overlapping header on scroll**
+   - Fixed header z-index and proper flex structure
+
+3. **Image size limit removed**
+   - Removed 10MB limit - app now compresses any size image automatically
+
+### Version Badge Fix:
+- Fixed version showing in two places:
+  - `<meta name="version">` - Was updated
+  - `#versionBadge` div - Was not updated (fixed now)
+
+### Files Modified:
+- `public/index.html` - All changes
+
+### Current App Structure:
+```
+Modals now follow this pattern:
+┌─────────────────────────────────────┐
+│ [X ביטול]   Title      [💾 שמור]   │  ← Fixed header
+├─────────────────────────────────────┤
+│                                     │
+│         Scrollable Content          │  ← overflow-y: auto
+│                                     │
+│         Form fields here            │
+│                                     │
+└─────────────────────────────────────┘
+
+On mobile: Full screen (h-full, no rounded corners)
+On desktop: Centered modal with max-width and rounded corners
+```
+
+---
+
+## Session Notes (v2.5.0 - v2.7.0 - February 7, 2026)
+
+### Safe Area Fix (Status Bar Overlap)
+**Problem:** Content was appearing behind the status bar on mobile devices with notches
+**Solution:**
+- Added `viewport-fit=cover` to meta viewport tag
+- Added `safe-area-spacer` div at top of body
+- Added `padding-top: env(safe-area-inset-top)` to:
+  - body
+  - app-header
+  - loading-screen
+  - login screen
+  - sidebar
+  - modal-backdrop
+  - Modal headers (car-modal-header, maintenance-modal-header, car-details-header)
+
+### Legal Pages Created
+**Files Added:**
+- `public/privacy.html` - Privacy Policy (Hebrew/English)
+- `public/terms.html` - Terms of Service (Hebrew/English)
+- Contact email: drvn.garage@gmail.com
+
+**Sidebar Links Added:**
+- Link to Privacy Policy
+- Link to Terms of Service
+
+### Google Play Store Assets Created
+**Files Added:**
+- `public/feature-graphic.html` - Feature Graphic (1024x500) for Play Store
+- `public/screenshots.html` - Initial screenshot mockups
+- `public/mockup.html` - Phone frame mockups
+- `public/download-screenshots.html` - Download page with html2canvas for all screenshots
+
+**Assets:**
+- 5 phone screenshots with mockup frames
+- 1 feature graphic (1024x500)
+- Download functionality using html2canvas library
+
+### Calendar UI Redesign (v2.6.0)
+**Completely redesigned calendar to match mockup design:**
+
+**New CSS Classes:**
+- `.calendar-modal-content` - Main content container
+- `.calendar-nav-header` - Navigation with month/year
+- `.calendar-nav-btn` - Arrow buttons for navigation
+- `.calendar-month-title` - Month/year title
+- `.calendar-day-names` - Day names header row
+- `.calendar-day-name` - Individual day name
+- `.appointments-section` - Appointments list container
+- `.appointments-section-title` - Title for appointments
+- `.appointment-card` - Individual appointment card with orange right border
+- `.appointment-time` - Time display (orange, bold)
+- `.appointment-info` - Owner name and car type
+- `.appointment-details` - Plate number and notes
+- `.appointment-actions` - Action buttons container
+- `.appointment-action-btn` - Styled buttons (edit, delete, whatsapp)
+- `.no-appointments` - Empty state display
+
+**Design Features:**
+- Orange gradient header
+- Clean calendar grid with rounded cells
+- Today highlighted in orange with shadow
+- Days with appointments in light yellow
+- Red dot indicator for appointment days
+- Appointment cards with orange right border
+- Colored action buttons (blue edit, red delete, green whatsapp)
+
+### Bottom Navigation Redesign (v2.7.0)
+**Improved bottom navigation bar:**
+- Clean white background (no gradient)
+- Thinner border and lighter shadow
+- Smaller icons with opacity when inactive
+- Active icon scales up and becomes fully visible
+- Smaller, lighter text labels
+- Orange dot indicator under active item
+- Support for safe-area-inset-bottom
+
+**CSS Changes:**
+```css
+.mobile-bottom-nav {
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    padding: 8px 0 max(env(safe-area-inset-bottom, 8px), 12px) 0;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+
+.nav-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 4px;
+    height: 4px;
+    background: #f59e0b;
+    border-radius: 50%;
+}
+```
+
+### Modal Scroll Lock Fix
+**Problem:** Background could still scroll when modals were open
+**Solution:**
+- Added global CSS for `body.modal-open` (not just mobile):
+```css
+body.modal-open {
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
+    height: 100% !important;
+    touch-action: none !important;
+}
+
+body.modal-open #mainApp,
+body.modal-open #carsGrid,
+body.modal-open .mobile-bottom-nav,
+body.modal-open .fab-button {
+    pointer-events: none !important;
+    user-select: none !important;
+}
+```
+
+- Updated all modal open/close functions to use `modal-open` class:
+  - openDashboard / closeDashboard
+  - showAccountModal / closeAccountModal
+  - openCalendarModal / closeCalendarModal
+  - openBackupModal / closeBackupModal
+  - openCarModal / closeCarModal
+  - openCarDetailsModal / closeCarDetailsModal
+  - openAppointmentModal / closeAppointmentModal
+  - closeAllModals
+
+### Appointment Modal Fix
+**Problem:** When closing appointment modal opened from car details, car details modal became transparent/broken
+**Solution:**
+```javascript
+function closeAppointmentModal() {
+    document.getElementById('appointmentModal').classList.add('hidden');
+    editingAppointmentId = null;
+
+    // Check if car details modal is still open
+    const carDetailsModal = document.getElementById('carDetailsModal');
+    if (carDetailsModal && !carDetailsModal.classList.contains('hidden')) {
+        document.body.classList.add('modal-open');
+    } else {
+        document.body.classList.remove('modal-open');
+        showUIElements();
+    }
+}
+```
+
+### Click Outside to Close Modals
+**Added onclick handlers to close modals when clicking backdrop:**
+```html
+<div id="calendarModal" onclick="if(event.target === this) closeCalendarModal()">
+    <div onclick="event.stopPropagation()">...</div>
+</div>
+
+<div id="appointmentModal" onclick="if(event.target === this) closeAppointmentModal()">
+    <div onclick="event.stopPropagation()">...</div>
+</div>
+```
+
+### Hidden Elements CSS Fix
+**Added stronger CSS for hidden elements:**
+```css
+.hidden {
+    display: none !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+```
+
+### Delete All Appointments Feature
+**Added "מחק הכל" button to delete all appointments for a selected day:**
+
+**UI:**
+- Button appears above appointment list when there are appointments
+- Shows count: "🗑️ מחק הכל (X)"
+- Styled with red delete button style
+
+**Function:**
+```javascript
+async function deleteAllAppointmentsForDay(dateStr) {
+    const dayAppointments = appointments.filter(apt => apt.date === dateStr);
+
+    if (dayAppointments.length === 0) {
+        alert('אין פגישות למחיקה ביום זה');
+        return;
+    }
+
+    // Confirmation with date and count
+    if (!confirm(`האם אתה בטוח שברצונך למחוק את כל ${dayAppointments.length} הפגישות ליום ${dateFormatted}?`)) return;
+
+    // Delete all appointments in parallel
+    const deletePromises = dayAppointments.map(apt =>
+        db.collection('appointments').doc(apt.id).delete()
+    );
+    await Promise.all(deletePromises);
+
+    await loadAppointments();
+    renderCalendar();
+}
+```
+
+### Files Modified This Session:
+- `public/index.html` - All UI changes
+- `public/privacy.html` - New file
+- `public/terms.html` - New file
+- `public/feature-graphic.html` - New file
+- `public/download-screenshots.html` - New file
+
+### Current State:
+- **Version:** v2.7.0
+- **App URL:** https://garage-17263.web.app
+- **Download Screenshots:** https://garage-17263.web.app/download-screenshots.html
+- All features working and deployed
+
+---
+
+## Session Notes (v2.8.0 - February 7, 2026)
+
+### Login Page Complete Redesign
+
+**Problem:** The original login page design was basic and outdated
+**Solution:** Complete redesign of `login.html` with modern, professional styling
+
+#### New Design Features:
+
+**1. Gradient Modern Design (Design 1)**
+- Dark gradient background (`#1e293b` to `#0f172a`)
+- Transparent input fields with subtle borders
+- Orange accent color for branding
+- Smooth transitions and hover effects
+
+**2. Password Visibility Toggle**
+- Added toggle button on all password fields (login + register)
+- Eye icon (👁️) shows password, monkey (🙈) hides it
+- Works on:
+  - Login password field
+  - Register password field
+  - Register confirm password field
+
+```javascript
+function togglePassword(inputId, button) {
+    const input = document.getElementById(inputId);
+    const icon = button.querySelector('span');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = '🙈';
+    } else {
+        input.type = 'password';
+        icon.textContent = '👁️';
+    }
+}
+```
+
+**3. Login/Register Tabs**
+- Clean tab switching between login and register
+- Active tab has orange gradient background
+- Inactive tabs are transparent
+
+**4. Forgot Password Functionality**
+- Uses `prompt()` to get email
+- Sends password reset email via Firebase Auth
+- Shows success/error messages in styled message box
+
+**5. Features Display at Bottom**
+- Shows app features: 🚗 ניהול רכבים, 📅 יומן פגישות, 🔔 תזכורות
+- Separated by subtle border line
+- Gray text for secondary information
+
+**6. Trial Information Box (Register Form)**
+- Blue-themed info box
+- Shows trial benefits:
+  - ✅ 30 יום ניסיון חינם
+  - ✅ גישה מלאה לכל התכונות
+  - ✅ אימות אימייל נדרש
+
+**7. Message System**
+- Styled message boxes for errors, success, and warnings
+- Different colors for each type:
+  - Error: Red background with red border
+  - Success: Green background with green border
+  - Warning: Orange background with orange border
+
+**8. Email Verification Flow**
+- Shows warning if email not verified
+- Resend verification button with 30-second cooldown
+- Rate limiting to prevent spam
+
+#### CSS Highlights:
+
+```css
+/* Gradient Background */
+body {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+/* Transparent Inputs */
+.input-field {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+/* Orange Gradient Buttons */
+.submit-btn {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+}
+
+/* Password Toggle */
+.toggle-password {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+```
+
+#### Files Modified:
+- `public/login.html` - Complete redesign
+
+#### Design Preview Page Created:
+- `public/login-designs.html` - Shows 3 design options in phone mockups:
+  1. **Gradient Modern** (Selected) - Dark gradient, transparent inputs
+  2. **Glass Card** - Backdrop blur glass effect
+  3. **Clean White** - Orange header with white card
+
+### Files Modified This Session:
+- `public/login.html` - Complete redesign with new styling
+- `public/login-designs.html` - New design preview page
+- `public/index.html` - Calendar CSS, bottom nav CSS, modal scroll lock
+
+### Current State:
+- **Version:** v2.8.0
+- **App URL:** https://garage-17263.web.app
+- **Login Page:** https://garage-17263.web.app/login.html
+- All features working and deployed
+
+---
+
+## Session Notes (v2.9.0 - February 9, 2026)
+
+### نظام Premium/Freemium
+
+**الوصف:** تم إنشاء نظام اشتراكات يقفل بعض الميزات للمستخدمين التجريبيين.
+
+**الميزات المقفلة للمستخدمين التجريبيين:**
+- التقويم (Calendar)
+- واتساب (WhatsApp)
+- الاتصال (Call)
+
+**السعر:** ₪200/شهر
+
+**الكود المضاف في index.html:**
+```javascript
+let isPremiumUser = false;
+
+function hasPremiumAccess() {
+    return isPremiumUser || (currentUser && currentUser.isAdmin);
+}
+
+function showPremiumModal(featureName) {
+    // يعرض نافذة Premium مع قائمة الميزات والسعر
+    // يخفي الشريط السفلي
+}
+
+function closePremiumModal() {
+    // يغلق النافذة ويعيد الشريط السفلي
+}
+
+function requirePremium(featureName, callback) {
+    if (hasPremiumAccess()) {
+        callback();
+    } else {
+        showPremiumModal(featureName);
+    }
+}
+```
+
+### إصلاحات شريط التنقل السفلي
+
+**المشاكل التي تم حلها:**
+1. الشريط لا يختفي عند فتح القائمة الجانبية
+2. الشريط لا يختفي عند فتح نافذة Premium
+3. الشريط لا يعود بعد إغلاق النوافذ
+
+**الحل:** استخدام CSS classes بدلاً من inline styles:
+```css
+.mobile-bottom-nav.nav-hidden {
+    transform: translateY(100%) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.fab-button.fab-hidden {
+    transform: translateY(200%) !important;
+    opacity: 0 !important;
+}
+```
+
+### إصلاح شريط انتهاء الاشتراك
+
+**المشكلة:** الشريط الأحمر "המנוי שלך פג תוקף" كان يغطي زر القائمة
+
+**الحل:** نقل الشريط إلى الأسفل (فوق الشريط السفلي) مع z-index أقل:
+```javascript
+banner.className = 'fixed bottom-16 left-0 right-0 bg-red-600 text-white p-2 text-center z-30 shadow-lg';
+```
+
+### إصلاحات نافذة النسخ الاحتياطي
+
+**المشاكل التي تم حلها:**
+1. النافذة كانت في الأعلى بدلاً من المنتصف
+2. لا يوجد زر إغلاق في الشاشة الرئيسية
+3. لا يوجد زر إغلاق في قائمة النسخ الاحتياطية
+
+**الحل:**
+```css
+@media (max-width: 768px) {
+    #backupModal {
+        align-items: center !important;
+        padding: 1rem !important;
+    }
+    #backupModal > div {
+        margin: auto !important;
+        max-height: 85vh !important;
+        border-radius: 1rem !important;
+    }
+}
+```
+تم إضافة أزرار "סגור" و "חזור" في الأماكن المناسبة.
+
+### نظام النسخ الاحتياطي السحابي (Cloud Backup)
+
+**الوصف:** نظام نسخ احتياطي تلقائي يعمل بدون فتح التطبيق باستخدام Firebase Cloud Functions.
+
+**الملفات المعدلة:**
+- `functions/index.js`
+- `public/index.html`
+
+**Cloud Functions المضافة:**
+
+#### 1. automaticBackup
+- نسخ احتياطي تلقائي كل يوم جمعة الساعة 23:00
+- يعمل لجميع المستخدمين تلقائياً
+- يرسل إشعار للمستخدم عند الانتهاء
+
+```javascript
+exports.automaticBackup = functions
+    .runWith({ timeoutSeconds: 540, memory: '512MB' })
+    .pubsub
+    .schedule('0 23 * * 5')  // Every Friday at 23:00
+    .timeZone('Asia/Jerusalem')
+    .onRun(async (context) => {
+        // Backup all users' data
+    });
+```
+
+#### 2. manualCloudBackup
+- نسخ احتياطي يدوي من التطبيق
+- يتحقق من وجود تغييرات قبل الحفظ (Hash comparison)
+- إذا لم تكن هناك تغييرات، يُرجع `skipped: true`
+
+#### 3. getUserBackups
+- جلب قائمة النسخ الاحتياطية للمستخدم (آخر 10)
+
+#### 4. restoreBackup
+- استعادة نسخة احتياطية من السحابة
+- يتحقق من ملكية النسخة
+
+### كشف التغييرات (Hash Detection)
+
+**الهدف:** منع حفظ نسخ احتياطية متكررة إذا لم تكن هناك تغييرات
+
+```javascript
+function generateBackupHash(data) {
+    const str = JSON.stringify({
+        carsIds: data.cars.map(c => c.id).sort(),
+        carsCount: data.cars.length,
+        maintenanceIds: data.maintenance.map(m => m.id).sort(),
+        maintenanceCount: data.maintenance.length,
+        appointmentsIds: data.appointments.map(a => a.id).sort(),
+        appointmentsCount: data.appointments.length
+    });
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    return hash.toString();
+}
+```
+
+### دمج النسخ السحابية والمحلية في واجهة واحدة
+
+**الوصف:** تم دمج عرض النسخ الاحتياطية السحابية والمحلية في نفس القائمة.
+
+**التمييز:**
+- النسخ السحابية: أيقونة ☁️ مع badge "ענן"
+- النسخ المحلية: أيقونة 💾 مع badge "מקומי"
+
+**الكود في index.html:**
+```javascript
+async function showBackupList() {
+    // جلب النسخ السحابية
+    const cloudBackups = await getCloudBackups();
+
+    // جلب النسخ المحلية
+    const localBackups = getLocalBackups();
+
+    // دمج وترتيب حسب التاريخ
+    const allBackups = [...cloudBackups, ...localBackups].sort((a, b) =>
+        new Date(b.date) - new Date(a.date)
+    );
+
+    // عرض القائمة مع تمييز النوع
+}
+```
+
+### محاولة تكامل PayPal
+
+**المحاولة:** تم محاولة إضافة PayPal SDK للدفع التلقائي.
+
+**المشكلة:** Client ID المستخدم كان Sandbox وليس Live، مما سمح بالدفع بدون أموال حقيقية.
+
+**الحل المؤقت:** الرجوع إلى طريقة PayPal.me اليدوية في `public/account.html`.
+
+### Firestore Index المطلوب
+
+**خطأ ظهر:** عند استخدام Cloud Backup، يجب إنشاء composite index:
+
+**Collection:** `backups`
+**Fields:**
+- `userId` (Ascending)
+- `backupDate` (Descending)
+
+**الحل:** النقر على الرابط في رسالة الخطأ أو إنشاءه يدوياً من Firebase Console.
+
+### Files Modified:
+- `public/index.html` - Premium system, backup UI, bottom nav fixes
+- `public/account.html` - PayPal.me payment method
+- `functions/index.js` - Cloud Functions for backup
+
+### Current State:
+- **Version:** v2.9.0
+- **App URL:** https://garage-17263.web.app
+- Premium system implemented and working
+- Cloud backup system deployed (pending index creation)
+- Hash-based change detection prevents duplicate backups
+
+---
+
+## Session Notes (February 9, 2026 - Part 2)
+
+### ترتيب ملفات المشروع
+
+#### الملفات المحذوفة:
+تم حذف صفحات التطوير/الاختبار التي لم تعد مطلوبة:
+- `public/login-designs.html` - صفحة عرض تصاميم تسجيل الدخول
+- `public/mockup.html` - صفحة mockups
+- `public/screenshots.html` - صفحة screenshots
+- `public/download-screenshots.html` - صفحة تحميل screenshots
+- `public/feature-graphic.html` - صفحة feature graphic
+
+#### محاولة تقسيم index.html (تم التراجع عنها):
+تم محاولة تقسيم ملف `index.html` (10,107 سطر) إلى ملفات منفصلة:
+- `css/styles.css` - (~2,000 سطر CSS)
+- `js/config.js` - (~60 سطر إعدادات)
+- `js/app.js` - (~7,000 سطر JavaScript)
+- `index.html` - (~1,000 سطر HTML فقط)
+
+**المشكلة:** التطبيق لم يعمل بعد التقسيم بسبب تعقيد التبعيات بين الكود.
+
+**الحل:** تم التراجع واستعادة الملف الأصلي من النسخة الاحتياطية `index.html.backup-before-split`.
+
+#### الدروس المستفادة:
+1. تقسيم ملف كبير يحتاج اختبار شامل قبل النشر
+2. التبعيات بين CSS/JS/HTML معقدة في هذا المشروع
+3. يُفضل الإبقاء على الملف كما هو طالما يعمل بشكل صحيح
+4. النسخ الاحتياطية مهمة جداً قبل أي تغيير كبير
+
+### هيكل المشروع الحالي:
+```
+garage-v2/
+├── public/
+│   ├── index.html          (422KB - الملف الرئيسي)
+│   ├── login.html          (صفحة تسجيل الدخول)
+│   ├── account.html        (صفحة الحساب والدفع)
+│   ├── admin.html          (لوحة الإدارة)
+│   ├── privacy.html        (سياسة الخصوصية)
+│   ├── terms.html          (شروط الخدمة)
+│   ├── manifest.json       (إعدادات PWA)
+│   ├── service-worker.js   (Service Worker)
+│   ├── firebase-messaging-sw.js
+│   ├── OneSignalSDKWorker.js
+│   └── icon-*.png          (أيقونات التطبيق)
+├── functions/
+│   ├── index.js            (Cloud Functions)
+│   └── package.json
+├── firebase.json
+├── .firebaserc
+├── PROJECT_SUMMARY.md      (هذا الملف)
+└── README.md
+```
+
+### النسخ الاحتياطية المتوفرة:
+- `index.html.backup` - نسخة من 4 فبراير
+- `index.html.backup-before-split` - نسخة قبل محاولة التقسيم
+
+---
+
+## Session Notes (February 10, 2026 - PayPal Integration)
+
+### تكامل PayPal الاحترافي (Live Integration)
+
+**المشكلة السابقة:** كان التطبيق يستخدم رابط PayPal.me يدوي، مما يتطلب تأكيد الدفع يدوياً.
+
+**الحل:** تم تنفيذ تكامل PayPal SDK الكامل مع Webhook للتفعيل التلقائي.
+
+#### بيانات PayPal Live:
+```
+Client ID: ARdAW7Nq-GLrIHOmn42oibE9ostkd5s06n7jjR43MkgtDpR7M2pT1vTG_QM3wiWiuaXYOPpKYceF0IcO
+Webhook ID: 20068087HU9794258
+Webhook URL: https://us-central1-garage-17263.cloudfunctions.net/paypalWebhook
+```
+
+#### طرق الدفع المتاحة:
+1. **PayPal** - الدفع بحساب PayPal
+2. **SEPA** - التحويل البنكي الأوروبي
+3. **Debit/Credit Card** - بطاقة ائتمان/خصم
+
+*ملاحظة: SEPA والبطاقات تُضاف تلقائياً بواسطة PayPal SDK.*
+
+#### الكود في account.html:
+
+**PayPal SDK في head:**
+```html
+<script src="https://www.paypal.com/sdk/js?client-id=ARdAW7Nq-GLrIHOmn42oibE9ostkd5s06n7jjR43MkgtDpR7M2pT1vTG_QM3wiWiuaXYOPpKYceF0IcO&currency=ILS"></script>
+```
+
+**حاوية الأزرار:**
+```html
+<div id="paypalSection" class="mt-6 hidden">
+    <h3 class="text-xl font-bold mb-4 text-center">💳 שלם עכשיו עם PayPal</h3>
+    <div class="max-w-md mx-auto">
+        <div id="paypal-button-container"></div>
+        <p class="text-gray-500 text-sm mt-3 text-center">תשלום מאובטח דרך PayPal - ניתן לשלם גם בכרטיס אשראי</p>
+        <p class="text-green-600 text-sm mt-2 font-bold text-center">✅ המנוי יופעל אוטומטית אחרי התשלום!</p>
+    </div>
+</div>
+```
+
+**تهيئة أزرار PayPal:**
+```javascript
+let paypalInitialized = false;
+
+function initPayPalButtons() {
+    if (paypalInitialized) return;
+    if (typeof paypal === 'undefined') {
+        setTimeout(initPayPalButtons, 500);
+        return;
+    }
+
+    paypal.Buttons({
+        style: {
+            layout: 'vertical',
+            color: 'blue',
+            shape: 'rect',
+            label: 'pay'
+        },
+        createOrder: function(data, actions) {
+            return actions.order.create({
+                purchase_units: [{
+                    description: 'DRVN Premium - מנוי חודשי',
+                    amount: {
+                        currency_code: 'ILS',
+                        value: '200.00'
+                    }
+                }]
+            });
+        },
+        onApprove: function(data, actions) {
+            return actions.order.capture().then(function(details) {
+                alert('🎉 התשלום בוצע בהצלחה!\n\nהמנוי שלך יופעל תוך מספר שניות.');
+                setTimeout(() => location.reload(), 2000);
+            });
+        },
+        onError: function(err) {
+            console.error('PayPal error:', err);
+            alert('❌ שגיאה בתשלום. אנא נסה שוב.');
+        }
+    }).render('#paypal-button-container');
+
+    paypalInitialized = true;
+}
+```
+
+### PayPal Webhook Cloud Function
+
+**الملف:** `functions/index.js`
+
+```javascript
+const PAYPAL_CLIENT_ID = 'ARdAW7Nq-GLrIHOmn42oibE9ostkd5s06n7jjR43MkgtDpR7M2pT1vTG_QM3wiWiuaXYOPpKYceF0IcO';
+
+exports.paypalWebhook = functions.https.onRequest(async (req, res) => {
+    if (req.method !== 'POST') {
+        res.status(405).send('Method Not Allowed');
+        return;
+    }
+
+    try {
+        const webhookEvent = req.body;
+        console.log('PayPal Webhook received:', webhookEvent.event_type);
+
+        // التحقق من نوع الحدث
+        if (webhookEvent.event_type === 'PAYMENT.CAPTURE.COMPLETED' ||
+            webhookEvent.event_type === 'CHECKOUT.ORDER.APPROVED') {
+
+            const resource = webhookEvent.resource;
+            const payerEmail = resource.payer?.email_address;
+            const amount = resource.amount?.value || resource.purchase_units?.[0]?.amount?.value;
+            const currency = resource.amount?.currency_code || resource.purchase_units?.[0]?.amount?.currency_code;
+
+            console.log(`Payment received: ${amount} ${currency} from ${payerEmail}`);
+
+            if (payerEmail) {
+                // البحث عن المستخدم بالإيميل
+                const usersSnapshot = await db.collection('users')
+                    .where('email', '==', payerEmail)
+                    .limit(1)
+                    .get();
+
+                if (!usersSnapshot.empty) {
+                    const userId = usersSnapshot.docs[0].id;
+                    const expiryDate = new Date();
+                    expiryDate.setDate(expiryDate.getDate() + 30); // 30 يوم
+
+                    // تحديث حالة الاشتراك
+                    await db.collection('users').doc(userId).update({
+                        isPaid: true,
+                        subscriptionStatus: 'active',
+                        subscriptionExpiry: expiryDate.toISOString(),
+                        lastPaymentDate: new Date().toISOString(),
+                        paymentMethod: 'paypal'
+                    });
+
+                    console.log(`Subscription activated for user: ${userId}`);
+
+                    // إرسال إشعار للمستخدم
+                    const userData = usersSnapshot.docs[0].data();
+                    if (userData.oneSignalPlayerId) {
+                        await sendPushNotification(
+                            [userData.oneSignalPlayerId],
+                            '🎉 המנוי הופעל!',
+                            'תודה על התשלום! המנוי שלך פעיל עכשיו.',
+                            { type: 'subscription_activated' }
+                        );
+                    }
+                }
+            }
+        }
+
+        res.status(200).send('OK');
+    } catch (error) {
+        console.error('PayPal Webhook error:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+```
+
+### إعداد PayPal Developer Dashboard
+
+**الخطوات:**
+1. الدخول إلى https://developer.paypal.com/dashboard
+2. إنشاء تطبيق جديد (Live)
+3. نسخ Client ID
+4. إضافة Webhook:
+   - URL: `https://us-central1-garage-17263.cloudfunctions.net/paypalWebhook`
+   - Events: `PAYMENT.CAPTURE.COMPLETED`, `CHECKOUT.ORDER.APPROVED`
+
+### أين تذهب الأموال؟
+
+- الأموال تذهب مباشرة إلى **محفظة PayPal Business**
+- يمكن سحبها إلى الحساب البنكي المرتبط بحساب PayPal
+- لسحب الأموال:
+  1. الدخول إلى PayPal.com
+  2. الذهاب إلى "المحفظة" أو "Wallet"
+  3. اختيار "Transfer to Bank"
+  4. تحديد المبلغ والحساب البنكي
+
+---
+
+## كيفية عمل التطبيق (Application Flow)
+
+### 1. هيكل الصفحات
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        التطبيق                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  login.html ──────► index.html ◄────► account.html          │
+│      │                  │                   │                │
+│      │                  │                   │                │
+│      ▼                  ▼                   ▼                │
+│  تسجيل الدخول      الصفحة الرئيسية      صفحة الحساب          │
+│  - تسجيل جديد      - إدارة السيارات    - الملف الشخصي       │
+│  - نسيت كلمة       - التقويم           - الاشتراك           │
+│    المرور          - البحث             - PayPal             │
+│                    - النسخ الاحتياطي                        │
+│                                                              │
+│                          │                                   │
+│                          ▼                                   │
+│                     admin.html                               │
+│                   (لوحة الإدارة)                             │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 2. تدفق تسجيل الدخول (Login Flow)
+
+```
+┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+│  login.html  │      │   Firebase   │      │  index.html  │
+└──────┬───────┘      └──────┬───────┘      └──────┬───────┘
+       │                     │                     │
+       │  1. إدخال بيانات    │                     │
+       │─────────────────►   │                     │
+       │                     │                     │
+       │  2. التحقق من       │                     │
+       │     Firebase Auth   │                     │
+       │◄────────────────────│                     │
+       │                     │                     │
+       │  3. التحقق من       │                     │
+       │     Email Verified  │                     │
+       │─────────────────►   │                     │
+       │                     │                     │
+       │  4. إعادة توجيه     │                     │
+       │──────────────────────────────────────────►│
+       │                     │                     │
+       │                     │  5. تحميل بيانات    │
+       │                     │◄────────────────────│
+       │                     │     المستخدم        │
+       │                     │                     │
+       │                     │  6. تسجيل OneSignal │
+       │                     │◄────────────────────│
+       │                     │     Player ID       │
+```
+
+### 3. تدفق الإشعارات (Notifications Flow)
+
+```
+┌──────────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+│  index.html  │      │  Firestore   │      │Cloud Function│      │   OneSignal  │
+└──────┬───────┘      └──────┬───────┘      └──────┬───────┘      └──────┬───────┘
+       │                     │                     │                     │
+       │  1. إنشاء موعد      │                     │                     │
+       │─────────────────►   │                     │                     │
+       │                     │                     │                     │
+       │                     │  2. كل 60 دقيقة    │                     │
+       │                     │     Scheduled       │                     │
+       │                     │◄────────────────────│                     │
+       │                     │                     │                     │
+       │                     │  3. جلب المواعيد    │                     │
+       │                     │     القادمة         │                     │
+       │                     │─────────────────►   │                     │
+       │                     │                     │                     │
+       │                     │                     │  4. إرسال إشعار     │
+       │                     │                     │─────────────────►   │
+       │                     │                     │                     │
+       │  5. استلام الإشعار  │                     │                     │
+       │◄──────────────────────────────────────────────────────────────│
+       │     على الهاتف      │                     │                     │
+```
+
+### 4. تدفق الدفع والاشتراك (Payment Flow)
+
+```
+┌──────────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+│ account.html │      │    PayPal    │      │Cloud Function│      │  Firestore   │
+└──────┬───────┘      └──────┬───────┘      └──────┬───────┘      └──────┬───────┘
+       │                     │                     │                     │
+       │  1. الضغط على      │                     │                     │
+       │     زر PayPal      │                     │                     │
+       │─────────────────►   │                     │                     │
+       │                     │                     │                     │
+       │  2. إتمام الدفع    │                     │                     │
+       │◄────────────────────│                     │                     │
+       │                     │                     │                     │
+       │                     │  3. Webhook Event   │                     │
+       │                     │  PAYMENT.CAPTURE    │                     │
+       │                     │─────────────────►   │                     │
+       │                     │  .COMPLETED         │                     │
+       │                     │                     │                     │
+       │                     │                     │  4. تحديث          │
+       │                     │                     │     isPaid: true    │
+       │                     │                     │─────────────────►   │
+       │                     │                     │                     │
+       │  5. إعادة تحميل    │                     │                     │
+       │     + الميزات      │                     │                     │
+       │     مفتوحة         │◄──────────────────────────────────────────│
+```
+
+### 5. تدفق النسخ الاحتياطي السحابي (Cloud Backup Flow)
+
+```
+┌──────────────┐                              ┌──────────────┐      ┌──────────────┐
+│  index.html  │                              │Cloud Function│      │  Firestore   │
+└──────┬───────┘                              └──────┬───────┘      └──────┬───────┘
+       │                                            │                     │
+       │  A. نسخ احتياطي يدوي                       │                     │
+       │────────────────────────────────────────►   │                     │
+       │         manualCloudBackup                  │                     │
+       │                                            │                     │
+       │                                            │  حفظ في backups    │
+       │                                            │─────────────────►   │
+       │                                            │                     │
+       │                                            │                     │
+       │  B. نسخ احتياطي تلقائي (كل جمعة 23:00)    │                     │
+       │                                            │                     │
+       │                        automaticBackup     │                     │
+       │                        ┌───────────────────│                     │
+       │                        │                   │                     │
+       │                        │   لكل مستخدم      │                     │
+       │                        │─────────────────────────────────────►   │
+       │                        │                   │                     │
+       │  إشعار بالإنتهاء     │◄──────────────────│                     │
+       │◄───────────────────────┘                   │                     │
+```
+
+### 6. التواصل بين الصفحات (Inter-Page Communication)
+
+```javascript
+// من index.html إلى account.html
+// يتم من خلال Firebase Auth - المستخدم مسجل الدخول
+
+// التحقق من حالة المستخدم في أي صفحة:
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        // مستخدم مسجل الدخول
+        loadUserData(user.uid);
+    } else {
+        // غير مسجل - إعادة توجيه لـ login
+        window.location.href = '/login.html';
+    }
+});
+
+// مشاركة البيانات:
+// 1. Firestore - قاعدة البيانات المشتركة
+// 2. localStorage - للإعدادات المحلية
+// 3. URL Parameters - لنقل بيانات بسيطة
+```
+
+### 7. نظام Premium
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    فحص صلاحية Premium                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  الميزة مطلوبة                                              │
+│       │                                                      │
+│       ▼                                                      │
+│  ┌─────────────────┐                                        │
+│  │ hasPremiumAccess│                                        │
+│  └────────┬────────┘                                        │
+│           │                                                  │
+│    ┌──────┴──────┐                                          │
+│    │             │                                          │
+│    ▼             ▼                                          │
+│  نعم           لا                                           │
+│    │             │                                          │
+│    ▼             ▼                                          │
+│ تنفيذ       showPremiumModal()                              │
+│ الميزة      - عرض الميزات                                   │
+│             - عرض السعر                                     │
+│             - زر "הרשמה עכשיו"                              │
+│                   │                                          │
+│                   ▼                                          │
+│             account.html                                     │
+│             - PayPal Buttons                                 │
+│                   │                                          │
+│                   ▼                                          │
+│             Webhook → isPaid: true                           │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 8. الميزات المقفلة (Locked Features)
+
+| الميزة | Free | Premium |
+|--------|------|---------|
+| إضافة سيارات | ✅ | ✅ |
+| عرض السيارات | ✅ | ✅ |
+| تعديل/حذف | ✅ | ✅ |
+| التقويم | ❌ | ✅ |
+| واتساب | ❌ | ✅ |
+| الاتصال | ❌ | ✅ |
+| النسخ الاحتياطي | ✅ | ✅ |
+
+---
+
+## ملخص Cloud Functions
+
+| Function | النوع | الوصف |
+|----------|-------|-------|
+| `checkAppointmentReminders` | Scheduled (60min) | فحص وإرسال تذكيرات المواعيد |
+| `cleanupOldReminders` | Scheduled (Daily 2AM) | حذف سجلات التذكيرات القديمة |
+| `sendTestReminder` | HTTP Callable | اختبار الإشعارات يدوياً |
+| `automaticBackup` | Scheduled (Fri 23:00) | نسخ احتياطي تلقائي أسبوعي |
+| `manualCloudBackup` | HTTP Callable | نسخ احتياطي يدوي من التطبيق |
+| `getUserBackups` | HTTP Callable | جلب قائمة النسخ الاحتياطية |
+| `restoreBackup` | HTTP Callable | استعادة نسخة احتياطية |
+| `paypalWebhook` | HTTP Request | استقبال أحداث PayPal |
+
+---
+
+---
+
+## Session Notes (v3.0.0 - v3.2.0 - February 14, 2026)
+
+### 1. Offline Support (v3.0.0)
+
+**New File:** `public/offline.html`
+- Beautiful offline page with retry functionality
+- Auto-check connection every 5 seconds
+- Tips for connection issues
+- "View cached data" button
+
+**Service Worker v50-52 Enhancements:**
+- Network-first for HTML files
+- Cache-first for images with placeholder fallback
+- Caches external resources (Tailwind, FontAwesome)
+- Generates inline offline HTML as fallback
+- Generates placeholder SVG for missing images
+
+**Offline/Online Banners:**
+- Red banner when offline: "אין חיבור לאינטרנט"
+- Green banner when connection restored: "החיבור חזר!"
+- Auto-hide after 3 seconds
+
+### 2. Rate Limiting System
+
+**Client-side protection against abuse:**
+
+```javascript
+const RateLimiter = {
+    limits: {
+        'saveCar': { maxAttempts: 10, windowMs: 60000 },
+        'saveMaintenance': { maxAttempts: 20, windowMs: 60000 },
+        'deleteRecord': { maxAttempts: 10, windowMs: 60000 },
+        'exportData': { maxAttempts: 5, windowMs: 300000 },
+        'uploadImage': { maxAttempts: 20, windowMs: 60000 },
+        'login': { maxAttempts: 5, windowMs: 300000 }
+    },
+    canPerform(actionType) { ... },
+    recordAction(actionType) { ... },
+    getTimeUntilReset(actionType) { ... }
+};
+```
+
+**Protected Functions:**
+- saveCar, saveMaintenance
+- deleteCar, deleteMaintenance
+- exportCSV, createBackup, createBackupWithImages, createCloudBackup
+
+### 3. Advanced Search System (v3.2.0)
+
+**Filter Panel with toggle button (filter icon)**
+
+**Filters:**
+- Car type (סוג רכב)
+- Year (שנה)
+- Maintenance status:
+  - recent (30 days)
+  - due (60+ days)
+  - overdue (90+ days)
+  - never
+
+**Sorting Options:**
+- Recent (נוסף לאחרונה)
+- Name (שם בעלים)
+- Plate (מספר רישוי)
+- Year new/old (שנה)
+- Last maintenance (טיפול אחרון)
+
+**Features:**
+- Active filter tags with individual clear buttons
+- Results counter: "מציג X מתוך Y רכבים"
+- Cards have `data-car-id` attribute for filtering
+- Maintenance cache for status filtering
+
+### 4. Firestore Security Rules (Enhanced)
+
+**New File:** `firestore.rules`
+
+**Added to firebase.json:**
+```json
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}
+```
+
+**Key Improvements:**
+- Data validation for required fields
+- userId immutability (cannot change after creation)
+- Subscription fields protected from user modification
+- Deny all unknown collections
+- Admin bypass for all operations
+
+**Simplified cars rule:**
+```
+allow create: if isSignedIn() &&
+  request.resource.data.userId == request.auth.uid &&
+  request.resource.data.keys().hasAll(['userId', 'plateNumber']);
+```
+
+### 5. PWA & App Store Readiness
+
+**manifest.json fully configured:**
+```json
+{
+  "id": "drvn-garage-app",
+  "screenshots": [...],
+  "shortcuts": [
+    { "name": "הוסף רכב", "url": "/?action=add-car" },
+    { "name": "יומן תורים", "url": "/?action=calendar" }
+  ],
+  "related_applications": []
+}
+```
+
+**Screenshots folder:** `public/screenshots/`
+- screenshot-1-home.png (560x1160)
+- screenshot-2-add-car.png (560x1160)
+- screenshot-3-details.png (560x1160)
+- screenshot-4-calendar.png (560x1160)
+- feature-graphic.png (2048x1000)
+
+**PWABuilder Score:** 30/44 (0 errors, 0 warnings)
+
+### 6. Version Badge Auto-Sync
+
+**Change version in ONE place only:**
+```html
+<meta name="version" content="3.2.0">
+```
+
+**Badge reads automatically:**
+```javascript
+document.getElementById('versionBadge').textContent =
+  'v' + document.querySelector('meta[name="version"]').content;
+```
+
+### 7. Security Headers (firebase.json)
+
+```json
+{
+  "headers": [
+    { "key": "X-Content-Type-Options", "value": "nosniff" },
+    { "key": "X-Frame-Options", "value": "DENY" },
+    { "key": "X-XSS-Protection", "value": "1; mode=block" },
+    { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+    { "key": "Permissions-Policy", "value": "geolocation=(), microphone=()" }
+  ]
+}
+```
+
+### Files Modified/Created:
+- `public/index.html` - v3.2.0
+- `public/offline.html` - NEW
+- `public/service-worker.js` - v52
+- `public/manifest.json` - Screenshots, shortcuts, id
+- `firestore.rules` - NEW
+- `firebase.json` - Added firestore rules reference
+
+### Current File Structure:
+```
+garage-v2/
+├── public/
+│   ├── index.html (main app, v3.2.0)
+│   ├── account.html
+│   ├── admin.html
+│   ├── offline.html (NEW)
+│   ├── privacy.html
+│   ├── terms.html
+│   ├── manifest.json
+│   ├── service-worker.js (v52)
+│   ├── OneSignalSDKWorker.js
+│   ├── icon-*.png
+│   └── screenshots/
+│       ├── screenshot-1-home.png
+│       ├── screenshot-2-add-car.png
+│       ├── screenshot-3-details.png
+│       ├── screenshot-4-calendar.png
+│       └── feature-graphic.png
+├── firebase.json
+├── firestore.rules (NEW)
+├── functions/
+└── PROJECT_SUMMARY.md
+```
+
+### Key Learnings:
+1. Version badge should auto-sync with meta tag
+2. Firestore rules: Keep validation simple to avoid blocking operations
+3. Screenshot sizes in manifest must match actual image dimensions
+4. Rate limiting protects against accidental abuse
+
+### App Store Readiness: 85%
+- ✅ PWA manifest complete
+- ✅ Screenshots ready
+- ✅ Privacy policy
+- ✅ Terms of service
+- ✅ Icons all sizes
+- ⚠️ Need Apple Developer account ($99/year) for iOS
+- ⚠️ Need Google Play account ($25 once) for Android
+
+---
+
+## Session Notes (v3.3.0 - February 19, 2026)
+
+### 1. تقسيم index.html إلى ملفات منظمة (Code Splitting)
+
+**المشكلة:** ملف `index.html` كان 10,767 سطر (CSS + HTML + JS في ملف واحد) - صعب الصيانة.
+
+**الحل:** تم تقسيمه إلى 14 ملف:
+
+```
+index.html    → 1,147 سطر (HTML فقط) - كان 10,767!
+css/styles.css → ~2,080 سطر (كل الأنماط)
+js/config.js   → متغيرات عامة، Firebase config
+js/utils.js    → sanitizeInput، validate، RateLimiter
+js/auth.js     → Firebase init، auth، subscription، theme
+js/cars.js     → Car & maintenance CRUD
+js/search.js   → Search، filters، exportCSV
+js/calendar.js → Calendar & appointments
+js/dashboard.js → Kanban board
+js/spare-parts.js → Spare parts & settings
+js/backup.js   → Backup/restore system
+js/ui.js       → Sidebar، modals، service worker
+js/notifications.js → Push notifications
+js/reminders.js → Reminders + window exports
+```
+
+**ترتيب التحميل مهم:** config → utils → auth → cars → search → calendar → dashboard → spare-parts → backup → ui → notifications → reminders
+
+**قاعدة حرجة:** كل المتغيرات المشتركة تستخدم `var` (ليس `let`/`const`) لأن `let`/`const` في top-level لا تُشارك بين ملفات `<script>` منفصلة.
+
+### 2. إخفاء ADMIN_EMAIL من الكود
+
+**المشكلة:** بريد المسؤول `h-26-7@hotmail.com` مكشوف في 4 ملفات JS + admin.html.
+
+**الحل:**
+- حُذف `ADMIN_EMAIL` من كل ملفات JS
+- حُذفت مصفوفة `ADMIN_EMAILS` من admin.html
+- أُضيف `var isAdmin = false` في config.js
+- يُحمّل `isAdmin` من Firestore (`users/{uid}.isAdmin === true`) في `checkSubscriptionStatus()`
+- يُعاد تعيينه `isAdmin = false` عند تسجيل الخروج
+- Firestore Rules لا تزال تحتوي البريد (server-side، لا يراها المستخدم)
+- admin.html يفحص `isAdmin` من Firestore بدل مصفوفة مكشوفة
+
+**الفحوصات المحدّثة (7):**
+- `auth.js`: `hasPremiumAccess()`, `showSubscriptionBanner()`, `canModifyData()`
+- `backup.js`: `createBackup()`, `createBackupWithImages()`, `createCloudBackup()`
+- `search.js`: `exportCSV()`
+
+### 3. إصلاحات ما بعد التقسيم
+
+| المشكلة | الحل |
+|---------|------|
+| `updateSidebarTheme is not defined` | أضيف `typeof` check (تُعرّف في ui.js، تُستدعى في auth.js) |
+| `maintenanceCache already declared` | حُذف التعريف المكرر من search.js |
+| `auth.onAuthStateChanged` undefined | أضيف `if (auth)` guard في backup.js و reminders.js |
+| `sparePartsContacts` let scoping | حُوّل من `let` إلى `var` |
+| Firestore permissions error | أضيف `.where('userId', '==', currentUser.uid)` في cars.js |
+
+### 4. تحديثات أخرى
+- **Service Worker v53** - أُضيفت كل ملفات JS/CSS الجديدة للتخزين المؤقت
+- **الإصدار** → v3.3.0
+
+### هيكل المشروع الحالي:
+```
+garage-v2/
+├── public/
+│   ├── index.html (v3.3.0 - HTML only, 1,147 lines)
+│   ├── account.html
+│   ├── admin.html (admin checks via Firestore)
+│   ├── login.html
+│   ├── offline.html
+│   ├── privacy.html
+│   ├── terms.html
+│   ├── manifest.json
+│   ├── service-worker.js (v53)
+│   ├── OneSignalSDKWorker.js
+│   ├── firebase-messaging-sw.js
+│   ├── icon-*.png
+│   ├── css/
+│   │   └── styles.css
+│   ├── js/
+│   │   ├── config.js
+│   │   ├── utils.js
+│   │   ├── auth.js
+│   │   ├── cars.js
+│   │   ├── search.js
+│   │   ├── calendar.js
+│   │   ├── dashboard.js
+│   │   ├── spare-parts.js
+│   │   ├── backup.js
+│   │   ├── ui.js
+│   │   ├── notifications.js
+│   │   └── reminders.js
+│   └── screenshots/
+├── firebase.json
+├── firestore.rules
+├── functions/
+└── PROJECT_SUMMARY.md
+```
+
+### الدروس المستفادة:
+1. `var` (not `let`/`const`) for shared globals across `<script>` tags
+2. Script loading order matters - config → utils → auth → rest
+3. `typeof fn === 'function'` check before calling functions from later-loaded files
+4. Firestore queries must include `userId` filter to match security rules
+5. `isAdmin` should be loaded from Firestore, not hardcoded email comparison
+6. المحاولة السابقة لتقسيم الملف فشلت (v2.9.0) - هذه المرة نجحت بسبب تحويل `let`/`const` إلى `var`
+
+---
+
+## Session Notes (v3.4.2 - February 19, 2026)
+
+### 1. نظام Onboarding للمستخدمين الجدد (v3.4.0)
+
+**المشكلة:** المستخدم الجديد يدخل التطبيق ويرى شاشة فارغة بدون توجيه.
+
+**الحل:** 4 شاشات onboarding تظهر فقط للمستخدمين الجدد:
+
+| الشاشة | المحتوى |
+|--------|---------|
+| 1. ترحيب | أيقونة DRVN + وصف + زر "התחל תוך דקה" |
+| 2. إضافة سيارة | حقلين فقط: מספר רישוי + שם הבעלים (اختياري) + تخطي |
+| 3. إضافة موعد | תאריך + שעה + תזכורת אוטומטית (مفعّلة) + تخطي |
+| 4. نجاح | ملخص ما أُضيف + زر "כניסה למערכת" |
+
+**الملفات الجديدة:**
+- `js/onboarding.js` - منطق الـ 4 شاشات، حفظ البيانات، تخطي
+
+**الملفات المعدّلة:**
+- `index.html` - إضافة ~180 سطر HTML للشاشات (z-index: 10000 فوق كل شيء)
+- `css/styles.css` - animations (slide-in, bounce) + dark mode support
+- `js/config.js` - إضافة `var hasCompletedOnboarding = true`
+- `js/auth.js` - ربط الـ onboarding بتسجيل الدخول
+- `login.html` - إضافة `onboardingCompleted: false` عند إنشاء حساب جديد
+
+**كيف يعمل:**
+```
+login.html: مستخدم جديد → إنشاء مستند Firestore مع onboardingCompleted: false
+    ↓
+auth.js: checkSubscriptionStatus() → يقرأ onboardingCompleted
+    ↓
+إذا false → startOnboarding() (بدل loadCars/loadAppointments)
+    ↓
+المستخدم يكمل/يتخطى → finishOnboarding() → onboardingCompleted: true في Firestore
+    ↓
+loadCars() + loadAppointments() تُستدعى بعد الانتهاء
+```
+
+**منطق فحص المستخدمين:**
+- حقل غير موجود (مستخدمين قدامى) → تخطي onboarding
+- `onboardingCompleted: false` → عرض onboarding
+- `onboardingCompleted: true` → تخطي
+
+**ملاحظة:** الشريط السفلي (bottom nav) وزر FAB يُخفيان أثناء الـ onboarding بـ `style.display = 'none'` (أقوى من CSS classes بسبب `!important` rules).
+
+### 2. تعديل أزرار كارت السيارة (v3.4.1)
+
+**التغيير:** استبدال زر "פרטים" (التفاصيل) بزر "+ טיפול" (إضافة صيانة)
+
+**السبب:** الضغط على صورة السيارة أو رقم الرישוي يفتح التفاصيل أصلاً، فزر التفاصيل مكرر.
+
+**الملف:** `js/cars.js` سطر 104
+```
+قبل: <button onclick="viewCarDetails('${car.id}')">פרטים</button>
+بعد: <button onclick="currentCarId='${car.id}'; openMaintenanceModal()">+ טיפול</button>
+```
+
+**الأزرار الحالية في الكارت:** `+ טיפול` | `ערוך` | `מחק`
+
+### 3. جاهزية App Store (v3.4.2)
+
+**الإصلاحات:**
+| العنصر | التغيير |
+|--------|---------|
+| Meta description | أُضيف وصف بالعبرية في index.html |
+| Apple touch icons | أُضيف icon-180.png (iPhone) + link tags لـ 180x180 و 152x152 |
+| IARC Rating | حُذف الحقل الفارغ من manifest.json (غير مطلوب لـ Apple) |
+| Manifest icons | أُضيف icon-180.png في قائمة الأيقونات |
+
+**جاهزية App Store: 95%**
+- ✅ manifest.json كامل (RTL, shortcuts, categories, screenshots)
+- ✅ Privacy Policy + Terms of Service (بلغتين)
+- ✅ أيقونات كاملة (48px → 512px + 180px لـ iOS)
+- ✅ Screenshots (5 صور)
+- ✅ Offline support كامل
+- ✅ Service Worker v56
+- ✅ Meta tags لـ Apple (apple-mobile-web-app-capable, status-bar-style)
+- ✅ Meta description
+- ⚠️ يحتاج Apple Developer Account ($99/سنة)
+
+### هيكل المشروع الحالي:
+```
+garage-v2/
+├── public/
+│   ├── index.html (v3.4.2 - ~1,335 lines)
+│   ├── account.html
+│   ├── admin.html
+│   ├── login.html (+ onboardingCompleted: false)
+│   ├── offline.html
+│   ├── privacy.html
+│   ├── terms.html
+│   ├── manifest.json (+ icon-180)
+│   ├── service-worker.js (v56)
+│   ├── icon-*.png (10 sizes including 180px)
+│   ├── css/
+│   │   └── styles.css (+ onboarding animations + dark mode)
+│   ├── js/
+│   │   ├── config.js (+ hasCompletedOnboarding)
+│   │   ├── utils.js
+│   │   ├── auth.js (+ onboarding integration)
+│   │   ├── cars.js (+ טיפול button)
+│   │   ├── search.js
+│   │   ├── calendar.js
+│   │   ├── dashboard.js
+│   │   ├── spare-parts.js
+│   │   ├── backup.js
+│   │   ├── ui.js
+│   │   ├── notifications.js
+│   │   ├── reminders.js
+│   │   └── onboarding.js (NEW)
+│   └── screenshots/
+├── firebase.json
+├── firestore.rules
+├── functions/
+└── PROJECT_SUMMARY.md
+```
+
+### ترتيب تحميل الملفات (13 ملف JS):
+config → utils → auth → cars → search → calendar → dashboard → spare-parts → backup → ui → notifications → reminders → **onboarding**
+
+---
+
+## Session Notes (v3.4.6 - v3.5.2 - February 20, 2026)
+
+### 1. رفع التطبيق لـ iOS TestFlight (v3.4.2+)
+
+تم رفع التطبيق لـ Apple TestFlight عبر PWABuilder:
+- إنشاء ملف `.xcarchive` من PWABuilder
+- رفعه عبر Xcode Organizer → Distribute App → App Store Connect
+- التطبيق متاح للاختبار عبر TestFlight
+
+### 2. إخفاء FAB وشريط التنقل السفلي عند فتح المودال (v3.4.6)
+
+**المشكلة:** زر FAB (+) والشريط السفلي يظلان ظاهرين فوق المودال عند فتحه.
+
+**الحل:**
+- أُضيفت CSS rules في `styles.css`:
+```css
+body.modal-open .mobile-bottom-nav {
+    transform: translateY(100%) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+body.modal-open .fab-button {
+    transform: translateY(200%) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+```
+- أُضيف `document.body.classList.add('modal-open')` في `editCar()` بـ `cars.js`
+
+### 3. إصلاح إخفاء الشريط السفلي عند التمرير (Scroll-Hide Fix) (v3.4.7)
+
+**المشكلة:** الشريط السفلي لا يختفي عند التمرير للأسفل بعد إضافة CSS للمودال.
+
+**السبب:** قواعد CSS للإظهار القسري (force-show) مع `!important` كانت تتغلب على class `hidden-scroll`:
+```css
+/* القواعد المحذوفة - كانت تمنع الإخفاء */
+body:not(.modal-open) .mobile-bottom-nav:not(.nav-hidden):not(.hidden-scroll) {
+    transform: translateY(0) !important;  /* كانت تتغلب على hidden-scroll */
+}
+body:not(.modal-open) .fab-button:not(.fab-hidden) {
+    transform: translateY(0) !important;
+}
+```
+
+**الحل:** حذف قواعد force-show بالكامل - العناصر تعود لموضعها الطبيعي بدون `!important`.
+
+### 4. إصلاح تمديد الاشتراك في لوحة الأدمن (v3.4.8)
+
+**المشكلة:** عند إضافة أيام لمستخدم انتهى اشتراكه (مثلاً في 2024)، تُضاف الأيام من تاريخ الانتهاء القديم بدلاً من اليوم.
+
+**الملف:** `admin.html` - دالة `extendSubscription()`
+
+**الحل:** مقارنة تاريخ الانتهاء مع اليوم واستخدام الأحدث:
+```javascript
+const startFrom = currentEndDate > now ? currentEndDate : now;
+newEndDate = new Date(startFrom);
+newEndDate.setDate(newEndDate.getDate() + daysNum);
+```
+
+**ملاحظة:** كود PayPal في `account.html` كان يتعامل مع هذا بشكل صحيح أصلاً.
+
+### 5. إعادة تصميم مودال الحساب (v3.5.0)
+
+**المشكلة:** في مودال "החשבון שלי":
+1. الإيميل يلتصق بتاريخ الانتهاء (overflow)
+2. لا يوجد زر تمديد/تجديد اشتراك - الزر يظهر فقط عند انتهاء الاشتراك
+
+**الملف:** `js/ui.js` - دالة `showAccountModal()`
+
+**الحل:**
+- فصل الإيميل والتاريخ في صفوف منفصلة (كانا في نفس الـ `flex justify-between`)
+- إضافة `word-break: break-all; overflow-wrap: break-word` للإيميل
+- إضافة أزرار حسب حالة الاشتراك:
+
+| الحالة | الزر | اللون |
+|--------|------|-------|
+| اشتراك فعّال | ➕ הארך מנוי | أخضر |
+| اشتراك منتهي | 💳 חדש מנוי | برتقالي |
+| بدون اشتراك | 💳 הירשם למנוי | أخضر |
+
+- جميع الأزرار تنقل إلى `account.html`
+
+### 6. إصلاح عدم تطابق حالة الاشتراك بين المودال وصفحة الحساب (v3.5.1)
+
+**المشكلة:** المودال يعرض "باقي 17 يوم" بينما `account.html` يعرض "الاشتراك منتهي".
+
+**السبب:** حقلان مختلفان في Firestore:
+
+| الحقل | المصدر | النوع |
+|-------|--------|-------|
+| `subscriptionEndDate` | يُكتب من الأدمن | Firestore Timestamp |
+| `subscriptionExpiry` | يُكتب من PayPal Webhook | ISO String |
+
+`account.html` كان يقرأ `subscriptionExpiry` فقط، لكن الاشتراك أُعطي عبر الأدمن الذي يستخدم `subscriptionEndDate`.
+
+**الحل:** قراءة **كلا الحقلين** وأخذ التاريخ الأحدث:
+```javascript
+let bestExpiry = null;
+if (userSubscription.subscriptionExpiry) {
+    bestExpiry = new Date(userSubscription.subscriptionExpiry);
+}
+if (userSubscription.subscriptionEndDate) {
+    let endDate = userSubscription.subscriptionEndDate.toDate
+        ? userSubscription.subscriptionEndDate.toDate()
+        : new Date(userSubscription.subscriptionEndDate);
+    if (!bestExpiry || endDate > bestExpiry) {
+        bestExpiry = endDate;
+    }
+}
+```
+
+### 7. إصلاح ترتيب فحص الاشتراك في صفحة الحساب (v3.5.2)
+
+**المشكلة:** حتى بعد قراءة كلا الحقلين، `account.html` لا تزال تعرض "منتهي".
+
+**السبب:** الكود كان يفحص الفترة التجريبية (trial) **قبل** الاشتراك المدفوع. المستخدم عنده trial منتهي → يطلع "منتهي" قبل ما يوصل لفحص الاشتراك.
+
+**الحل:** إعادة ترتيب الفحوصات:
+```
+قبل: Trial → Subscription → Default
+بعد: Subscription → Trial → Default
+```
+
+**إصلاحات إضافية في account.html:**
+- إظهار زر التمديد **دائماً** (ليس فقط آخر 7 أيام)
+- إضافة no-cache meta headers
+- إصلاح overflow الإيميل بـ `word-break: break-all`
+
+### 8. توثيق حقول الاشتراك في Firestore
+
+```
+مستند users/{uid}:
+├── subscriptionEndDate   ← Firestore Timestamp (يُكتب من admin.html)
+├── subscriptionExpiry    ← ISO String (يُكتب من PayPal Webhook)
+├── subscriptionStatus    ← 'active' | 'expired'
+├── isPaid               ← boolean
+├── trialStartDate       ← Firestore Timestamp
+├── isAdmin              ← boolean (يُقرأ من Firestore)
+└── onboardingCompleted  ← boolean
+```
+
+### الإصدارات في هذه الجلسة:
+
+| الإصدار | SW | الوصف |
+|---------|-----|-------|
+| v3.4.6 | v59 | FAB + bottom nav يختفيان مع المودال |
+| v3.4.7 | v61 | إصلاح scroll-hide |
+| v3.4.8 | v62 | إصلاح تمديد الاشتراك في الأدمن |
+| v3.5.0 | v64 | إعادة تصميم مودال الحساب |
+| v3.5.1 | v65 | قراءة كلا حقلي الاشتراك |
+| v3.5.2 | v66 | إعادة ترتيب فحص الاشتراك |
+
+### الملفات المعدّلة:
+- `public/css/styles.css` - حذف force-show rules + إضافة modal-open rules
+- `public/js/cars.js` - إضافة modal-open لـ editCar()
+- `public/js/ui.js` - إعادة تصميم showAccountModal()
+- `public/admin.html` - smart date extension
+- `public/account.html` - dual field reading + reordered checks + always-show button
+- `public/service-worker.js` - v59 → v66
+- `public/index.html` - v3.4.6 → v3.5.2
+
+### الدروس المستفادة:
+1. حقلان مختلفان للاشتراك في Firestore - يجب قراءة كليهما
+2. ترتيب الفحوصات مهم - الاشتراك المدفوع قبل التجريبي
+3. CSS specificity مع `!important` يمكن أن تتعارض - حذف القواعد الزائدة أفضل من إضافة المزيد
+4. المودال (`showAccountModal` في ui.js) مختلف عن صفحة الحساب (`account.html`)
+5. Service Worker caching قد يؤخر ظهور التحديثات
+
+---
+
+## Session Notes (v3.5.2 → v3.7.1 - February 21, 2026)
+
+### iOS Push Notifications - Complete Implementation ✅
+
+**الهدف:** تفعيل إشعارات Push حقيقية على تطبيق iOS (TestFlight) اللي مبني كـ WKWebView wrapper.
+
+**المشكلة الأساسية:** WKWebView **لا يدعم** Web Push APIs (`Notification`, `PushManager`, `serviceWorker`). لذلك نحتاج bridge بين JavaScript و Swift عبر `webkit.messageHandlers`.
+
+---
+
+### Architecture (كيف يشتغل النظام)
+
+```
+[iOS App - Swift]                    [Web - JavaScript]                [Server - Cloud Functions]
+     │                                      │                                    │
+     │  1. User taps "הפעל התראות"          │                                    │
+     │  ←──── postMessage(pushHandler) ─────│                                    │
+     │                                      │                                    │
+     │  2. Swift requests iOS permission    │                                    │
+     │  ────── push-permission-result ─────→│                                    │
+     │                                      │                                    │
+     │  3. Swift gets APNs → FCM token      │                                    │
+     │  ────── push-token ────────────────→ │                                    │
+     │                                      │  4. Save token to Firestore        │
+     │                                      │  ─────────────────────────────────→ │
+     │                                      │                                    │
+     │                                      │                                    │  5. Reminder check (every 15 min)
+     │                                      │                                    │  → FCM send to token
+     │  6. iOS shows native notification    │                                    │
+     │  ←──────────────────────────── APNs ─┤────────── FCM → APNs ─────────────│
+```
+
+---
+
+### Phase 1: Web Bridge Code (`notifications.js`)
+
+**Event Listeners على `window` + `document`:**
+- Swift's `this.dispatchEvent()` dispatches على `window`
+- لذلك لازم listeners على الاثنين:
+  - `push-permission-request` → نتيجة طلب الإذن
+  - `push-token` → FCM token من Swift
+  - `push-notification` → إشعار جديد
+  - `push-notification-click` → المستخدم ضغط على الإشعار
+  - `push-permission-state` → حالة الإذن
+
+**WKWebView Detection:**
+```javascript
+function isIOSWKWebView() {
+    return window.webkit && window.webkit.messageHandlers &&
+           (window.webkit.messageHandlers['push-permission-request'] ||
+            window.webkit.messageHandlers['push-subscribe']);
+}
+```
+
+**iOS FCM Token Flow:**
+1. User taps button → `postMessage('push-permission-request')`
+2. Swift asks iOS permission → dispatches `push-permission-request` event
+3. If granted → Swift gets FCM token → dispatches `push-token` event
+4. JS saves token to Firestore: `{ fcmToken, platform: 'ios_native', pushEnabled: true }`
+
+---
+
+### Phase 2: Native iOS Changes (`drvn-ios` repo)
+
+**Files Modified:**
+- `DRVN.xcodeproj/project.pbxproj` → Bundle version 1→2
+- `AppDelegate.swift` → `FirebaseApp.configure()` + APNs registration
+- `PushNotifications.swift` → WKWebView message handlers + FCM token bridge
+
+**Key Swift Functions:**
+- `handlePushPermission()` → requests iOS notification permission
+- `handleFCMToken()` → gets FCM token and sends to web
+- `returnPermissionResult()` → dispatches CustomEvent to web
+- `sendPushToWebView()` → forwards received notifications to web
+
+**Build:**
+- Xcode 16.4 on macos-15 runner
+- CocoaPods: Firebase/Messaging
+- GitHub Actions workflow: `.github/workflows/build-ios.yml`
+
+---
+
+### Phase 3: Cloud Functions (`functions/index.js`)
+
+**FCM-First Routing for iOS:**
+```javascript
+async function sendNotificationToUser(userData, title, message, data) {
+    // Path 1: iOS Native → FCM first (OneSignal doesn't work on WKWebView)
+    if (userData.platform === 'ios_native' && userData.fcmToken) {
+        await sendFCMNotification(userData.fcmToken, title, message, data);
+    }
+    // Path 2: OneSignal (web + Android)
+    // Path 3: FCM fallback
+}
+```
+
+**FCM Send Function:**
+```javascript
+async function sendFCMNotification(fcmToken, title, message, data) {
+    const payload = {
+        token: fcmToken,
+        notification: { title, body: message },
+        data: stringData,
+        apns: {
+            headers: { 'apns-priority': '10', 'apns-push-type': 'alert' },
+            payload: { aps: { alert: { title, body: message }, sound: 'default', badge: 1 } }
+        }
+    };
+    await admin.messaging().send(payload);
+}
+```
+
+**HTTP Endpoint (for iOS WKWebView):**
+- `sendTestFCMHttp` → `functions.https.onRequest()` (no auth required)
+- `httpsCallable` doesn't work in WKWebView (no Firebase Auth session)
+- Called via `fetch()` from client
+
+**Reminder Schedule:**
+- Changed from `every 60 minutes` → `every 15 minutes`
+
+**Dependencies (pinned):**
+```json
+{
+    "firebase-admin": "12.0.0",
+    "firebase-functions": "5.1.1",
+    "google-auth-library": "^9.15.1",
+    "node-fetch": "^2.7.0"
+}
+```
+
+**Firebase Admin Init:**
+```javascript
+admin.initializeApp();  // Default credentials (Cloud Functions auto-provides)
+```
+
+---
+
+### Phase 4: APNs Key Configuration
+
+**Apple Developer Console:**
+- Created APNs Authentication Key: `Z8M8DAP2TN`
+- Environment: **Sandbox & Production** (مهم جداً!)
+- Team ID: `NNZ8M78272`
+
+**Firebase Console → Cloud Messaging:**
+- Uploaded key as **BOTH** Development AND Production APNs auth key
+- Key ID: `Z8M8DAP2TN`
+- Team ID: `NNZ8M78272`
+
+---
+
+### Debugging Issues Resolved (مهم للرجوع إليها)
+
+| # | المشكلة | السبب | الحل |
+|---|---------|-------|------|
+| 1 | Bundle version already uploaded | `CURRENT_PROJECT_VERSION = 1` كان مرفوع من قبل | تغيير إلى `2` في 4 أماكن في `project.pbxproj` |
+| 2 | Swift events not received by web | Swift `this.dispatchEvent()` = `window`، بينما JS listeners كانت على `document` بس | إضافة listeners على `window` + `document` |
+| 3 | OneSignal used instead of FCM | `oneSignalPlayerId` موجود في user doc فالكود يجرب OneSignal أول | إضافة iOS-first check: if `platform === 'ios_native'` → FCM first |
+| 4 | `httpsCallable` auth error | WKWebView ما عنده Firebase Auth session | إنشاء `sendTestFCMHttp` كـ HTTP endpoint بدل callable |
+| 5 | `BadEnvironmentKeyInToken` | APNs key في Apple Developer كانت **Sandbox only** | إنشاء key جديدة بـ **Sandbox & Production** environment |
+| 6 | `THIRD_PARTY_AUTH_ERROR` | الـ key مرفوعة كـ Development بس في Firebase Console | رفع نفس الـ key كـ **Production** أيضاً في Firebase Console |
+| 7 | `firebase-functions` v7 breaks `runWith()` | `^5.1.1` في package.json سحب v7 | تثبيت الإصدار بدون `^`: `"5.1.1"` |
+
+---
+
+### Files Modified This Session
+
+**Web (garage-v2/public/):**
+- `js/notifications.js` → iOS bridge code, event listeners, FCM test via HTTP
+- `service-worker.js` → Version bumps (v66 → v75)
+- `index.html` → Cache busters, version v3.7.1
+
+**Cloud Functions (garage-v2/functions/):**
+- `index.js` → FCM sending, iOS-first routing, HTTP endpoint, 15-min schedule
+- `package.json` → Pinned versions, added google-auth-library
+- `serviceAccountKey.json` → Firebase Admin SDK key (for debugging, reverted to default init)
+
+**iOS App (drvn-ios/):**
+- `DRVN.xcodeproj/project.pbxproj` → Bundle version 1→2
+
+---
+
+### Current State
+- **Version:** v3.7.1
+- **Service Worker:** v75
+- **iOS Push Notifications:** ✅ Working on TestFlight
+- **Reminder Schedule:** Every 15 minutes
+- **APNs Key:** `Z8M8DAP2TN` (Sandbox & Production)
+- **FCM:** Using `admin.messaging().send()` with default credentials
+- **Dependencies:** `firebase-admin@12.0.0`, `firebase-functions@5.1.1` (pinned)
+
+### Important Configuration
+```
+APNs Auth Key ID: Z8M8DAP2TN
+Apple Team ID: NNZ8M78272
+Bundle ID: com.drvn.garagee
+Firebase Project: garage-17263
+GCM Sender ID (iOS): 332265903935
+GCM Sender ID (Web): 721619076271
+iOS Build Version: 2
+```
+
+---
+
+*Last Updated: February 21, 2026*
+*Current Version: v3.7.1*
+*Service Worker: v75*
 *This document contains everything needed to continue development.*
