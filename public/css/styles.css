@@ -10,6 +10,10 @@
     -webkit-touch-callout: none;
 }
 
+html {
+    overscroll-behavior: none;
+}
+
 /* Prevent text selection everywhere (native apps don't select text) */
 body {
     -webkit-user-select: none;
@@ -327,6 +331,8 @@ body {
     transition: background 0.3s ease, color 0.3s ease;
     /* Padding for safe area */
     padding-top: env(safe-area-inset-top, 0px);
+    /* Prevent overscroll bounce/flash */
+    overscroll-behavior: none;
 }
 
 /* Dark Mode Toggle Button */
@@ -1344,6 +1350,11 @@ body.sidebar-open {
     z-index: 40;
     /* Safe area padding for notch/status bar */
     padding-top: env(safe-area-inset-top, 0px);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-header.hidden-scroll {
+    transform: translateY(-100%);
 }
 
 .header-accent {
@@ -2279,4 +2290,18 @@ details summary span:last-child {
 
 [data-theme="dark"] #onboardingSummary {
     background-color: #1e293b;
+}
+
+/* ==========================================
+   CAR WHEEL LOADER
+   ========================================== */
+
+.wheel-spinner {
+    animation: wheelSpin 1.2s linear infinite;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+}
+
+@keyframes wheelSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }

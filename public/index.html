@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="version" content="3.9.1">
+    <meta name="version" content="3.9.5">
     <title>DRVN - מערכת ניהול מוסך</title>
     <meta name="description" content="DRVN - מערכת ניהול מוסך מקצועית. ניהול רכבים, טיפולים, תורים, תזכורות וגיבויים במקום אחד.">
 
@@ -249,11 +249,6 @@
                     <span id="notificationBtnText">הפעל התראות</span>
                 </button>
 
-                <button onclick="toggleSidebar(); setTimeout(() => testNotification(), 100);" class="sidebar-menu-item">
-                    <span class="sidebar-icon">🧪</span>
-                    <span>בדיקת התראות</span>
-                </button>
-
                 <button onclick="toggleTheme();" class="sidebar-menu-item">
                     <span class="sidebar-icon" id="sidebarThemeIcon">☀️</span>
                     <span id="sidebarThemeText">מצב לילה</span>
@@ -415,7 +410,7 @@
         </div>
         
         <!-- Version Badge (auto-synced with meta tag) -->
-        <div id="versionBadge" style="position: fixed; bottom: 70px; left: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; z-index: 999; cursor: pointer;" onclick="debugNotifications()"></div>
+        <div id="versionBadge" style="position: fixed; bottom: 70px; left: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; z-index: 999;"></div>
         <script>document.getElementById('versionBadge').textContent = 'v' + document.querySelector('meta[name="version"]').content;</script>
 
         <!-- Mobile Bottom Navigation -->

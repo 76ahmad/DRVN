@@ -1,6 +1,6 @@
 // Service Worker for Garage Management System PWA
-// AUTO-UPDATE SYSTEM - v79 (fix calendar active effect)
-const CACHE_VERSION = 79;
+// AUTO-UPDATE SYSTEM - v88 (fix account deletion - re-auth before delete)
+const CACHE_VERSION = 88;
 const CACHE_NAME = `garage-system-v${CACHE_VERSION}`;
 const OFFLINE_PAGE = '/offline.html';
 

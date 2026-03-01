@@ -1,8 +1,61 @@
 // DRVN Garage - Car & Maintenance Management
 
+// Car Wheel Loading - BMW Style
+function showCarLoader() {
+    var grid = document.getElementById('carsGrid');
+    if (!grid) return;
+    grid.innerHTML = `
+        <div id="carLoader" style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 0;">
+            <div class="wheel-spinner">
+                <svg width="70" height="70" viewBox="0 0 200 200">
+                    <circle cx="100" cy="100" r="95" fill="#1a1a1a"/>
+                    <circle cx="100" cy="100" r="95" fill="none" stroke="#333" stroke-width="3"/>
+                    <circle cx="100" cy="100" r="88" fill="none" stroke="#2a2a2a" stroke-width="8"/>
+                    <circle cx="100" cy="100" r="82" fill="#111"/>
+                    <circle cx="100" cy="100" r="68" fill="#2c2c2c"/>
+                    <circle cx="100" cy="100" r="68" fill="none" stroke="#444" stroke-width="1.5"/>
+                    <circle cx="100" cy="100" r="64" fill="#1e1e1e"/>
+                    <path d="M100,38 L88,75 Q100,80 112,75 Z" fill="#2a2a2a" stroke="#444" stroke-width="0.8"/>
+                    <path d="M100,38 L94,68 Q100,72 106,68 Z" fill="#363636"/>
+                    <path d="M159,78 L122,88 Q120,100 128,110 Z" fill="#2a2a2a" stroke="#444" stroke-width="0.8"/>
+                    <path d="M159,78 L126,92 Q124,100 130,106 Z" fill="#363636"/>
+                    <path d="M137,150 L118,112 Q108,118 106,130 Z" fill="#2a2a2a" stroke="#444" stroke-width="0.8"/>
+                    <path d="M137,150 L120,116 Q112,120 110,128 Z" fill="#363636"/>
+                    <path d="M63,150 L82,112 Q92,118 94,130 Z" fill="#2a2a2a" stroke="#444" stroke-width="0.8"/>
+                    <path d="M63,150 L80,116 Q88,120 90,128 Z" fill="#363636"/>
+                    <path d="M41,78 L78,88 Q80,100 72,110 Z" fill="#2a2a2a" stroke="#444" stroke-width="0.8"/>
+                    <path d="M41,78 L74,92 Q76,100 70,106 Z" fill="#363636"/>
+                    <circle cx="100" cy="100" r="22" fill="#1a1a1a" stroke="#555" stroke-width="1.5"/>
+                    <circle cx="100" cy="100" r="18" fill="#222" stroke="#444" stroke-width="1"/>
+                    <circle cx="100" cy="100" r="14" fill="#111"/>
+                    <circle cx="100" cy="100" r="13" fill="none" stroke="#f59e0b" stroke-width="1.5"/>
+                    <text x="100" y="104" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="bold" font-family="Arial">DRVN</text>
+                    <circle cx="100" cy="78" r="3" fill="#333" stroke="#555" stroke-width="0.8"/>
+                    <circle cx="121" cy="93" r="3" fill="#333" stroke="#555" stroke-width="0.8"/>
+                    <circle cx="113" cy="117" r="3" fill="#333" stroke="#555" stroke-width="0.8"/>
+                    <circle cx="87" cy="117" r="3" fill="#333" stroke="#555" stroke-width="0.8"/>
+                    <circle cx="79" cy="93" r="3" fill="#333" stroke="#555" stroke-width="0.8"/>
+                    <ellipse cx="80" cy="70" rx="20" ry="10" fill="white" opacity="0.04" transform="rotate(-30, 80, 70)"/>
+                </svg>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.85rem;">טוען רכבים...</p>
+        </div>`;
+}
+
+function removeCarLoader() {
+    var loader = document.getElementById('carLoader');
+    if (loader) {
+        loader.style.opacity = '0';
+        loader.style.transition = 'opacity 0.3s ease';
+        setTimeout(function() { loader.remove(); }, 300);
+    }
+}
+
 // Load Cars
 async function loadCars() {
     try {
+        showCarLoader();
+
         const snapshot = await db.collection('cars')
             .where('userId', '==', currentUser.uid)
             .get();
@@ -18,6 +71,7 @@ async function loadCars() {
         await loadSparePartsContacts();
     } catch (error) {
         console.error('Error loading cars:', error);
+        removeCarLoader();
     }
 }
 

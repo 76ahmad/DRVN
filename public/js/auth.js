@@ -112,9 +112,16 @@ auth.onAuthStateChanged(async (user) => {
     isAuthChecked = true;
 
     if (!user) {
-        // المستخدم غير مسجل دخول → توجيه إلى صفحة التسجيل
-        console.log('No user logged in, redirecting to login.html');
-        window.location.href = 'login.html';
+        // المستخدم غير مسجل دخول
+        if (localStorage.getItem('hasVisitedBefore')) {
+            // زائر سابق → صفحة الدخول مباشرة
+            console.log('Returning visitor, redirecting to login.html');
+            window.location.href = 'login.html';
+        } else {
+            // زائر جديد → صفحة تسويقية
+            console.log('First time visitor, redirecting to landing.html');
+            window.location.href = 'landing.html';
+        }
         return;
     }
 

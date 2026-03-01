@@ -498,11 +498,13 @@ var scrollThreshold = 15; // Increased threshold for smoother feel
 // Cache DOM elements
 var cachedSearchContainer = null;
 var cachedBottomNav = null;
+var cachedAppHeader = null;
 
 function getScrollElements() {
     if (!cachedSearchContainer) cachedSearchContainer = document.getElementById('searchContainer');
     if (!cachedBottomNav) cachedBottomNav = document.querySelector('.mobile-bottom-nav');
-    return { searchContainer: cachedSearchContainer, bottomNav: cachedBottomNav };
+    if (!cachedAppHeader) cachedAppHeader = document.querySelector('.app-header');
+    return { searchContainer: cachedSearchContainer, bottomNav: cachedBottomNav, appHeader: cachedAppHeader };
 }
 
 // Debounced scroll class for performance
@@ -523,7 +525,7 @@ window.addEventListener('scroll', function() {
     if (!ticking) {
         window.requestAnimationFrame(function() {
             if (window.innerWidth <= 768) {
-                var { searchContainer, bottomNav } = getScrollElements();
+                var { searchContainer, bottomNav, appHeader } = getScrollElements();
                 var currentScrollY = window.scrollY;
                 var scrollDiff = currentScrollY - lastScrollY;
 
@@ -535,6 +537,7 @@ window.addEventListener('scroll', function() {
                 if (atTop) {
                     if (searchContainer) searchContainer.classList.remove('hidden-scroll');
                     if (bottomNav) bottomNav.classList.remove('hidden-scroll');
+                    if (appHeader) appHeader.classList.remove('hidden-scroll');
                     lastScrollY = currentScrollY;
                     ticking = false;
                     return;
@@ -553,13 +556,15 @@ window.addEventListener('scroll', function() {
                 }
 
                 if (scrollDiff > 0) {
-                    // Scrolling down - hide both
+                    // Scrolling down - hide all
                     if (searchContainer) searchContainer.classList.add('hidden-scroll');
                     if (bottomNav) bottomNav.classList.add('hidden-scroll');
+                    if (appHeader) appHeader.classList.add('hidden-scroll');
                 } else {
-                    // Scrolling up - show both
+                    // Scrolling up - show all
                     if (searchContainer) searchContainer.classList.remove('hidden-scroll');
                     if (bottomNav) bottomNav.classList.remove('hidden-scroll');
+                    if (appHeader) appHeader.classList.remove('hidden-scroll');
                 }
                 lastScrollY = currentScrollY;
             }
@@ -710,9 +715,9 @@ function deleteAccountConfirm() {
     var confirmed = confirm('האם אתה בטוח שברצונך למחוק את החשבון?\nכל הנתונים יימחקו לצמיתות ולא ניתן לשחזר אותם.');
     if (!confirmed) return;
 
-    var emailConfirm = prompt('לאישור סופי, הקלד את כתובת האימייל שלך:');
-    if (!emailConfirm || emailConfirm.trim().toLowerCase() !== currentUser.email.toLowerCase()) {
-        alert('האימייל לא תואם. המחיקה בוטלה.');
+    var passwordInput = prompt('לאישור סופי, הקלד את הסיסמה שלך:');
+    if (!passwordInput) {
+        alert('המחיקה בוטלה.');
         return;
     }
 
@@ -729,8 +734,13 @@ function deleteAccountConfirm() {
 
     var userId = currentUser.uid;
 
-    // Delete user data from Firestore then delete auth account
-    db.collection('users').doc(userId).delete()
+    // Re-authenticate first to ensure account deletion will succeed
+    var credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, passwordInput);
+    currentUser.reauthenticateWithCredential(credential)
+        .then(function() {
+            // Delete user data from Firestore
+            return db.collection('users').doc(userId).delete();
+        })
         .then(function() {
             // Delete cars collection for this user
             return db.collection('cars').where('userId', '==', userId).get();
@@ -743,7 +753,7 @@ function deleteAccountConfirm() {
             return batch.commit();
         })
         .then(function() {
-            // Delete the Firebase Auth account
+            // Delete the Firebase Auth account (guaranteed to work after re-auth)
             return currentUser.delete();
         })
         .then(function() {
@@ -752,8 +762,8 @@ function deleteAccountConfirm() {
         })
         .catch(function(error) {
             console.error('Error deleting account:', error);
-            if (error.code === 'auth/requires-recent-login') {
-                alert('יש להתחבר מחדש לפני מחיקת החשבון. אנא התנתק והתחבר שוב.');
+            if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                alert('הסיסמה שגויה. המחיקה בוטלה.');
             } else {
                 alert('שגיאה במחיקת החשבון: ' + error.message);
             }
