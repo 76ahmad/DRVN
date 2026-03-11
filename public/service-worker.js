@@ -1,6 +1,6 @@
 // Service Worker for Garage Management System PWA
-// AUTO-UPDATE SYSTEM - v88 (fix account deletion - re-auth before delete)
-const CACHE_VERSION = 88;
+// AUTO-UPDATE SYSTEM - v102 (WhatsApp direct open)
+const CACHE_VERSION = 102;
 const CACHE_NAME = `garage-system-v${CACHE_VERSION}`;
 const OFFLINE_PAGE = '/offline.html';
 

@@ -38,8 +38,8 @@ async function checkUpcomingAppointments() {
                 // ⭐ استخدام Service Worker Notification (أفضل!)
                 if (getNotificationPermission() === 'granted' && 'serviceWorker' in navigator) {
                     navigator.serviceWorker.ready.then(registration => {
-                        registration.showNotification('⏰ תזכורת: פגישה בעוד שעה', {
-                            body: `פגישה עם ${carInfo} בשעה ${appointment.time}`,
+                        registration.showNotification('⏰ תזכורת: טיפול בעוד שעה', {
+                            body: `טיפול עם ${carInfo} בשעה ${appointment.time}`,
                             icon: '/icon-192.png',
                             badge: '/icon-192.png',
                             tag: `appointment-${doc.id}`,
@@ -276,8 +276,8 @@ async function testNotifications() {
 
         // 4. إشعار موعد (بعد 3 ثواني)
         setTimeout(async () => {
-            await registration.showNotification('⏰ תזכורת: פגישה בעוד שעה', {
-                body: 'פגישה עם טויוטה קאמרי (123-456) בעוד שעה אחת',
+            await registration.showNotification('⏰ תזכורת: טיפול בעוד שעה', {
+                body: 'טיפול עם טויוטה קאמרי (123-456) בעוד שעה אחת',
                 icon: '/icon-192.png',
                 badge: '/icon-192.png',
                 tag: 'test-appointment',
@@ -466,10 +466,10 @@ async function sendAppointmentPushNotification(appointment, type) {
         let title, body;
 
         if (type === '24h') {
-            title = '📅 תזכורת: פגישה מחר';
+            title = '📅 תזכורת: טיפול מחר';
             body = `${appointment.customerName || 'לקוח'} - ${appointment.time} - ${appointment.description || 'טיפול'}`;
         } else if (type === '1h') {
-            title = '⏰ תזכורת: פגישה בעוד שעה!';
+            title = '⏰ תזכורת: טיפול בעוד שעה!';
             body = `${appointment.customerName || 'לקוח'} - ${appointment.time} - ${appointment.description || 'טיפול'}`;
         }
 
@@ -554,14 +554,14 @@ function sendWhatsAppReminder(appointment) {
 
     const message = encodeURIComponent(
         `שלום ${appointment.customerName || ''}! 👋\n\n` +
-        `תזכורת לפגישה שלך במוסך:\n` +
+        `תזכורת לטיפול שלך במוסך:\n` +
         `📅 תאריך: ${appointment.date}\n` +
         `🕐 שעה: ${appointment.time}\n` +
         `🔧 סוג טיפול: ${appointment.description || 'טיפול'}\n\n` +
         `נשמח לראותך! 🚗`
     );
 
-    window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
+    window.location.href = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${message}`;
 }
 
 // تشغيل فاحص التذكيرات عند تسجيل الدخول

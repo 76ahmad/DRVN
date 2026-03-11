@@ -102,11 +102,15 @@
             await loadSparePartsContacts();
             displaySparePartsContacts();
             document.getElementById('settingsModal').classList.remove('hidden');
+            document.body.classList.add('modal-open');
+            hideUIElements();
         }
 
         // Close Settings
         function closeSettings() {
             document.getElementById('settingsModal').classList.add('hidden');
+            document.body.classList.remove('modal-open');
+            showUIElements();
         }
 
         // Order Spare Part with Supplier Selection and Engine Size
@@ -203,26 +207,14 @@
 
             if (!supplier || !car) return;
 
-            // Build WhatsApp message with engine size
-            let message = `שלום ${supplier.name},\n\n`;
-            message += `אני מעוניין להזמין חלק חילוף:\n\n`;
-            message += `📋 *פרטי הרכב:*\n`;
-            if (car.carType) message += `סוג רכב: ${car.carType}\n`;
-            if (car.model) message += `דגם: ${car.model}\n`;
-            if (car.year) message += `שנה: ${car.year}\n`;
-            if (car.enginePower) message += `🔧 מנוע: ${car.enginePower}\n`;
-            message += `\n🛠️ *החלק המבוקש:*\n`;
-            message += `${partName}\n`;
-            if (partDetails) {
-                message += `\nפרטים נוספים:\n${partDetails}\n`;
-            }
-            message += `\nתודה!`;
+            // Build WhatsApp message from custom template
+            var message = buildSparePartsMessage(supplier, car, partName, partDetails);
 
             const cleanPhone = supplier.phone.replace(/\D/g, '');
             const phoneWithCode = cleanPhone.startsWith('972') ? cleanPhone : '972' + cleanPhone.replace(/^0/, '');
 
-            const whatsappUrl = `https://wa.me/${phoneWithCode}?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
+            const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneWithCode}&text=${encodeURIComponent(message)}`;
+            window.location.href = whatsappUrl;
 
             closeOrderPartModal();
         }
@@ -314,29 +306,18 @@
 
             if (!supplier || !car) return;
 
-            // Build WhatsApp message
-            let message = `שלום ${supplier.name},\n\n`;
-            message += `אני מעוניין להזמין חלק חילוף:\n\n`;
-            message += `📋 *פרטי הרכב:*\n`;
-            if (car.carType) message += `סוג רכב: ${car.carType}\n`;
-            if (car.model) message += `דגם: ${car.model}\n`;
-            if (car.year) message += `שנה: ${car.year}\n`;
-            if (car.enginePower) message += `🔧 מנוע: ${car.enginePower}\n`;
-            message += `\n🛠️ *החלק המבוקש:*\n`;
-            message += `${partName}\n`;
-            if (workDescription) {
-                message += `\nתיאור: ${workDescription}\n`;
-            }
-            if (partDetails) {
-                message += `\nפרטים נוספים:\n${partDetails}\n`;
-            }
-            message += `\nתודה!`;
+            // Build WhatsApp message from custom template
+            var fullDetails = '';
+            if (workDescription) fullDetails += 'תיאור: ' + workDescription;
+            if (partDetails) fullDetails += (fullDetails ? '\n' : '') + partDetails;
+
+            var message = buildSparePartsMessage(supplier, car, partName, fullDetails);
 
             const cleanPhone = supplier.phone.replace(/\D/g, '');
             const phoneWithCode = cleanPhone.startsWith('972') ? cleanPhone : '972' + cleanPhone.replace(/^0/, '');
 
-            const whatsappUrl = `https://wa.me/${phoneWithCode}?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
+            const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneWithCode}&text=${encodeURIComponent(message)}`;
+            window.location.href = whatsappUrl;
 
             closeOrderPartModal();
         }

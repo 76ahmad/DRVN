@@ -1,54 +1,68 @@
 // DRVN Garage - Car & Maintenance Management
 
-// Car Wheel Loading - BMW Style
+// Drive Type Toggle
+function selectDriveType(type) {
+    document.getElementById('driveType').value = type;
+    document.querySelectorAll('.drive-type-btn').forEach(function(btn) {
+        btn.classList.remove('active');
+    });
+    var selected = document.querySelector('.drive-type-btn[data-drive="' + type + '"]');
+    if (selected) selected.classList.add('active');
+}
+
+function resetDriveType() {
+    document.getElementById('driveType').value = '';
+    document.querySelectorAll('.drive-type-btn').forEach(function(btn) {
+        btn.classList.remove('active');
+    });
+}
+
+// Skeleton Loader for Cars
 function showCarLoader() {
     var grid = document.getElementById('carsGrid');
     if (!grid) return;
-    grid.innerHTML = `
-        <div id="carLoader" style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 0;">
-            <div class="wheel-spinner">
-                <svg width="70" height="70" viewBox="0 0 200 200">
-                    <circle cx="100" cy="100" r="95" fill="#1a1a1a"/>
-                    <circle cx="100" cy="100" r="95" fill="none" stroke="#333" stroke-width="3"/>
-                    <circle cx="100" cy="100" r="88" fill="none" stroke="#2a2a2a" stroke-width="8"/>
-                    <circle cx="100" cy="100" r="82" fill="#111"/>
-                    <circle cx="100" cy="100" r="68" fill="#2c2c2c"/>
-                    <circle cx="100" cy="100" r="68" fill="none" stroke="#444" stroke-width="1.5"/>
-                    <circle cx="100" cy="100" r="64" fill="#1e1e1e"/>
-                    <path d="M100,38 L88,75 Q100,80 112,75 Z" fill="#2a2a2a" stroke="#444" stroke-width="0.8"/>
-                    <path d="M100,38 L94,68 Q100,72 106,68 Z" fill="#363636"/>
-                    <path d="M159,78 L122,88 Q120,100 128,110 Z" fill="#2a2a2a" stroke="#444" stroke-width="0.8"/>
-                    <path d="M159,78 L126,92 Q124,100 130,106 Z" fill="#363636"/>
-                    <path d="M137,150 L118,112 Q108,118 106,130 Z" fill="#2a2a2a" stroke="#444" stroke-width="0.8"/>
-                    <path d="M137,150 L120,116 Q112,120 110,128 Z" fill="#363636"/>
-                    <path d="M63,150 L82,112 Q92,118 94,130 Z" fill="#2a2a2a" stroke="#444" stroke-width="0.8"/>
-                    <path d="M63,150 L80,116 Q88,120 90,128 Z" fill="#363636"/>
-                    <path d="M41,78 L78,88 Q80,100 72,110 Z" fill="#2a2a2a" stroke="#444" stroke-width="0.8"/>
-                    <path d="M41,78 L74,92 Q76,100 70,106 Z" fill="#363636"/>
-                    <circle cx="100" cy="100" r="22" fill="#1a1a1a" stroke="#555" stroke-width="1.5"/>
-                    <circle cx="100" cy="100" r="18" fill="#222" stroke="#444" stroke-width="1"/>
-                    <circle cx="100" cy="100" r="14" fill="#111"/>
-                    <circle cx="100" cy="100" r="13" fill="none" stroke="#f59e0b" stroke-width="1.5"/>
-                    <text x="100" y="104" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="bold" font-family="Arial">DRVN</text>
-                    <circle cx="100" cy="78" r="3" fill="#333" stroke="#555" stroke-width="0.8"/>
-                    <circle cx="121" cy="93" r="3" fill="#333" stroke="#555" stroke-width="0.8"/>
-                    <circle cx="113" cy="117" r="3" fill="#333" stroke="#555" stroke-width="0.8"/>
-                    <circle cx="87" cy="117" r="3" fill="#333" stroke="#555" stroke-width="0.8"/>
-                    <circle cx="79" cy="93" r="3" fill="#333" stroke="#555" stroke-width="0.8"/>
-                    <ellipse cx="80" cy="70" rx="20" ry="10" fill="white" opacity="0.04" transform="rotate(-30, 80, 70)"/>
-                </svg>
-            </div>
-            <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.85rem;">טוען רכבים...</p>
-        </div>`;
+
+    var skeletonCard = '<div class="skeleton-card">' +
+        '<div class="skeleton-image skeleton-pulse"></div>' +
+        '<div style="padding: 1.5rem;">' +
+            '<div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem;">' +
+                '<div style="flex: 1;">' +
+                    '<div class="skeleton-line-lg skeleton-pulse" style="width: 55%;"></div>' +
+                    '<div class="skeleton-line skeleton-pulse" style="width: 40%;"></div>' +
+                    '<div class="skeleton-badge skeleton-pulse" style="margin-top: 0.75rem;"></div>' +
+                '</div>' +
+                '<div class="skeleton-circle skeleton-pulse"></div>' +
+            '</div>' +
+            '<div style="border-top: 1px solid var(--border-color); margin-bottom: 1rem;"></div>' +
+            '<div style="margin-bottom: 1.25rem;">' +
+                '<div class="skeleton-line skeleton-pulse" style="width: 60%;"></div>' +
+                '<div class="skeleton-line skeleton-pulse" style="width: 70%;"></div>' +
+                '<div class="skeleton-line skeleton-pulse" style="width: 50%;"></div>' +
+                '<div class="skeleton-line skeleton-pulse" style="width: 45%;"></div>' +
+            '</div>' +
+            '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">' +
+                '<div class="skeleton-btn skeleton-pulse"></div>' +
+                '<div class="skeleton-btn skeleton-pulse"></div>' +
+                '<div class="skeleton-btn skeleton-pulse"></div>' +
+            '</div>' +
+        '</div>' +
+    '</div>';
+
+    grid.innerHTML = skeletonCard + skeletonCard + skeletonCard;
 }
 
 function removeCarLoader() {
-    var loader = document.getElementById('carLoader');
-    if (loader) {
-        loader.style.opacity = '0';
-        loader.style.transition = 'opacity 0.3s ease';
-        setTimeout(function() { loader.remove(); }, 300);
-    }
+    var grid = document.getElementById('carsGrid');
+    if (!grid) return;
+    var skeletons = grid.querySelectorAll('.skeleton-card');
+    if (skeletons.length === 0) return;
+    skeletons.forEach(function(s) {
+        s.style.opacity = '0';
+        s.style.transition = 'opacity 0.3s ease';
+    });
+    setTimeout(function() {
+        skeletons.forEach(function(s) { s.remove(); });
+    }, 300);
 }
 
 // Load Cars
@@ -147,7 +161,7 @@ function displayCars() {
                     <button onclick="requirePremium('call', () => window.location.href='tel:${car.phone}')" class="quick-action-btn bg-green-500 hover:bg-green-600">
                         📞 <span class="hidden sm:inline">התקשר</span>
                     </button>
-                    <button onclick="requirePremium('whatsapp', () => window.open('https://wa.me/972${car.phone.replace(/^0/, '')}', '_blank'))" class="quick-action-btn bg-emerald-500 hover:bg-emerald-600">
+                    <button onclick="requirePremium('whatsapp', () => window.location.href='https://api.whatsapp.com/send?phone=972${car.phone.replace(/^0/, '')}')" class="quick-action-btn bg-emerald-500 hover:bg-emerald-600">
                         💬 <span class="hidden sm:inline">WhatsApp</span>
                     </button>
                 </div>
@@ -210,7 +224,8 @@ async function viewCarDetails(carId) {
             ${car.vinCode ? `<div><span class="font-bold">קוד רכב (VIN):</span> ${car.vinCode}</div>` : ''}
             ${car.immobilizerCode ? `<div class="bg-yellow-50 border border-yellow-300 p-2 rounded"><span class="font-bold">🔑 קוד התנעה:</span> <span class="font-mono">${car.immobilizerCode}</span></div>` : ''}
             ${car.engineType ? `<div><span class="font-bold">סוג מנוע:</span> ${car.engineType}</div>` : ''}
-            ${car.enginePower ? `<div class="col-span-2"><span class="font-bold">הספק מנוע:</span> ${car.enginePower}</div>` : ''}
+            ${car.enginePower ? `<div><span class="font-bold">הספק מנוע:</span> ${car.enginePower}</div>` : ''}
+            ${car.driveType ? `<div><span class="font-bold">סוג הנעה:</span> ${car.driveType === 'front' ? '⬆️ קדמי (FWD)' : car.driveType === 'rear' ? '⬇️ אחורי (RWD)' : '🔄 4x4 (AWD)'}</div>` : ''}
         </div>
     `;
 
@@ -305,6 +320,7 @@ function openCarModal() {
     document.getElementById('modalTitle').textContent = 'הוסף רכב';
     document.getElementById('carForm').reset();
     document.getElementById('imagePreview').innerHTML = '';
+    resetDriveType();
     document.getElementById('carModal').classList.remove('hidden');
     document.body.classList.add('modal-open');
     hideUIElements(); // إخفاء FAB والقائمة السفلية
@@ -340,6 +356,13 @@ function editCar(carId) {
     document.getElementById('immobilizerCode').value = car.immobilizerCode || '';
     document.getElementById('engineType').value = car.engineType || '';
     document.getElementById('enginePower').value = car.enginePower || '';
+
+    // Load drive type
+    if (car.driveType) {
+        selectDriveType(car.driveType);
+    } else {
+        resetDriveType();
+    }
 
     // إعادة تعيين حقل الصورة بالكامل
     const imageInput = document.getElementById('carImage');
@@ -487,6 +510,7 @@ document.getElementById('carForm').addEventListener('submit', async (e) => {
             immobilizerCode: sanitizeInput(document.getElementById('immobilizerCode').value.trim()),
             engineType: sanitizeInput(document.getElementById('engineType').value.trim()),
             enginePower: sanitizeInput(document.getElementById('enginePower').value.trim()),
+            driveType: document.getElementById('driveType').value || '',
             userId: currentUser.uid,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };

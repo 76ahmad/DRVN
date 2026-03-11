@@ -1,5 +1,123 @@
 // DRVN Garage - Dashboard & Kanban Board
 
+        // WhatsApp notification toggle
+        var whatsappNotifyEnabled = localStorage.getItem('whatsappNotify') !== 'false'; // default ON
+
+        // Default WhatsApp messages
+        var defaultWhatsAppMessages = {
+            in_progress: 'שלום {name}, רכבך {plate} נכנס לטיפול במוסך שלנו 🔧\nנעדכן אותך כשיהיה מוכן לאיסוף.',
+            ready: 'שלום {name}, רכבך {plate} מוכן ומחכה לאיסוף ✅\nניתן לבוא לקחת את הרכב.',
+            completed: 'שלום {name}, רכבך {plate} נמסר בהצלחה 🎉\nתודה שבחרת בשירותינו!',
+            spareParts: 'שלום {supplier},\n\nאני מעוניין להזמין חלק חילוף:\n\n📋 *פרטי הרכב:*\nסוג רכב: {carType}\nדגם: {model}\nשנה: {year}\n🔧 מנוע: {engine}\n\n🛠️ *החלק המבוקש:*\n{part}\n\n{details}\n\nתודה!'
+        };
+
+        // Load custom messages from localStorage or use defaults
+        var customWhatsAppMessages = JSON.parse(localStorage.getItem('whatsappMessages') || 'null') || {};
+        // Merge with defaults (in case new fields were added)
+        if (!customWhatsAppMessages.in_progress) customWhatsAppMessages.in_progress = defaultWhatsAppMessages.in_progress;
+        if (!customWhatsAppMessages.ready) customWhatsAppMessages.ready = defaultWhatsAppMessages.ready;
+        if (!customWhatsAppMessages.completed) customWhatsAppMessages.completed = defaultWhatsAppMessages.completed;
+        if (!customWhatsAppMessages.spareParts) customWhatsAppMessages.spareParts = defaultWhatsAppMessages.spareParts;
+
+        function toggleWhatsAppNotify() {
+            var toggle = document.getElementById('whatsappToggle');
+            whatsappNotifyEnabled = toggle.checked;
+            localStorage.setItem('whatsappNotify', whatsappNotifyEnabled ? 'true' : 'false');
+        }
+
+        // Variable buttons config
+        var statusVariables = [
+            { tag: '{name}', label: '📛 שם' },
+            { tag: '{plate}', label: '🔢 לוחית' },
+            { tag: '{phone}', label: '📞 טלפון' },
+            { tag: '{carType}', label: '🚗 סוג רכב' },
+            { tag: '{model}', label: '📋 דגם' },
+            { tag: '{year}', label: '📅 שנה' },
+            { tag: '{engine}', label: '⚙️ מנוע' },
+            { tag: '{drive}', label: '🛞 הנעה' }
+        ];
+
+        var sparePartsVariables = [
+            { tag: '{supplier}', label: '🏪 ספק' },
+            { tag: '{carType}', label: '🚗 סוג רכב' },
+            { tag: '{model}', label: '📋 דגם' },
+            { tag: '{year}', label: '📅 שנה' },
+            { tag: '{engine}', label: '⚙️ מנוע' },
+            { tag: '{drive}', label: '🛞 הנעה' },
+            { tag: '{part}', label: '🔧 חלק' },
+            { tag: '{details}', label: '📝 פרטים' }
+        ];
+
+        function insertVariable(textareaId, variable) {
+            var textarea = document.getElementById(textareaId);
+            if (!textarea) return;
+            var start = textarea.selectionStart;
+            var end = textarea.selectionEnd;
+            var text = textarea.value;
+            textarea.value = text.substring(0, start) + variable + text.substring(end);
+            textarea.focus();
+            var newPos = start + variable.length;
+            textarea.setSelectionRange(newPos, newPos);
+        }
+
+        function renderVariableButtons() {
+            var containers = document.querySelectorAll('#whatsappMessagesModal [data-target]');
+            containers.forEach(function(container) {
+                var targetId = container.getAttribute('data-target');
+                var vars = targetId === 'msgSpareParts' ? sparePartsVariables : statusVariables;
+                container.innerHTML = vars.map(function(v) {
+                    return '<button type="button" onclick="insertVariable(\'' + targetId + '\',\'' + v.tag + '\')" class="text-xs bg-green-50 border border-green-200 text-green-700 px-2.5 py-1 rounded-lg hover:bg-green-100 transition font-bold">' + v.label + '</button>';
+                }).join('');
+            });
+        }
+
+        // Open WhatsApp Messages Modal
+        function openWhatsAppMessagesModal() {
+            document.getElementById('whatsappMessagesModal').classList.remove('hidden');
+            document.body.classList.add('modal-open');
+            hideUIElements();
+            // Load current messages into textareas
+            document.getElementById('msgInProgress').value = customWhatsAppMessages.in_progress;
+            document.getElementById('msgReady').value = customWhatsAppMessages.ready;
+            document.getElementById('msgCompleted').value = customWhatsAppMessages.completed;
+            document.getElementById('msgSpareParts').value = customWhatsAppMessages.spareParts;
+            // Render variable buttons
+            renderVariableButtons();
+        }
+
+        // Close WhatsApp Messages Modal
+        function closeWhatsAppMessagesModal() {
+            document.getElementById('whatsappMessagesModal').classList.add('hidden');
+            document.body.classList.remove('modal-open');
+            showUIElements();
+        }
+
+        // Save custom WhatsApp messages
+        function saveWhatsAppMessages() {
+            customWhatsAppMessages.in_progress = document.getElementById('msgInProgress').value.trim() || defaultWhatsAppMessages.in_progress;
+            customWhatsAppMessages.ready = document.getElementById('msgReady').value.trim() || defaultWhatsAppMessages.ready;
+            customWhatsAppMessages.completed = document.getElementById('msgCompleted').value.trim() || defaultWhatsAppMessages.completed;
+            customWhatsAppMessages.spareParts = document.getElementById('msgSpareParts').value.trim() || defaultWhatsAppMessages.spareParts;
+
+            localStorage.setItem('whatsappMessages', JSON.stringify(customWhatsAppMessages));
+            showNotification('ההודעות נשמרו בהצלחה ✅');
+            closeWhatsAppMessagesModal();
+        }
+
+        // Reset WhatsApp messages to defaults
+        function resetWhatsAppMessages() {
+            customWhatsAppMessages = JSON.parse(JSON.stringify(defaultWhatsAppMessages));
+            localStorage.removeItem('whatsappMessages');
+
+            // Update textareas
+            document.getElementById('msgInProgress').value = defaultWhatsAppMessages.in_progress;
+            document.getElementById('msgReady').value = defaultWhatsAppMessages.ready;
+            document.getElementById('msgCompleted').value = defaultWhatsAppMessages.completed;
+            document.getElementById('msgSpareParts').value = defaultWhatsAppMessages.spareParts;
+
+            showNotification('ההודעות אופסו לברירת מחדל');
+        }
+
         // Open Dashboard
         function openDashboard() {
             // إغلاق السايد بار إذا كان مفتوحاً
@@ -12,6 +130,9 @@
             // فتح لوح البكرة
             document.getElementById('dashboardModal').classList.remove('hidden');
             document.body.classList.add('modal-open');
+            // Sync WhatsApp toggle with saved state
+            var toggle = document.getElementById('whatsappToggle');
+            if (toggle) toggle.checked = whatsappNotifyEnabled;
             renderDashboard();
             // تحديث حالة النافيجيشن
             updateActiveNav(1);
@@ -123,8 +244,8 @@
 
                 showNotification(`${car.plateNumber} הועבר ל: ${statusNames[newStatus]}`);
 
-                // Send WhatsApp message based on status change
-                if (car.phone) {
+                // Send WhatsApp message based on status change (if enabled)
+                if (whatsappNotifyEnabled && car.phone) {
                     sendWhatsAppForStatus(car, newStatus);
                 }
 
@@ -142,29 +263,55 @@
                 return;
             }
 
-            let message = '';
-            const ownerName = car.ownerName || 'לקוח יקר';
-            const plateNumber = car.plateNumber;
+            var messageTemplate = '';
+            var ownerName = car.ownerName || 'לקוח יקר';
+            var plateNumber = car.plateNumber;
 
             switch(status) {
                 case 'in_progress':
-                    message = `שלום ${ownerName}, רכבך ${plateNumber} נכנס לטיפול במוסך שלנו 🔧\nנעדכן אותך כשיהיה מוכן לאיסוף.`;
+                    messageTemplate = customWhatsAppMessages.in_progress;
                     break;
                 case 'ready':
-                    message = `שלום ${ownerName}, רכבך ${plateNumber} מוכן ומחכה לאיסוף ✅\nניתן לבוא לקחת את הרכב.`;
+                    messageTemplate = customWhatsAppMessages.ready;
                     break;
                 case 'completed':
-                    message = `שלום ${ownerName}, רכבך ${plateNumber} נמסר בהצלחה 🎉\nתודה שבחרת בשירותינו!`;
+                    messageTemplate = customWhatsAppMessages.completed;
                     break;
                 default:
                     // No message for 'waiting' status
                     return;
             }
 
+            // Replace placeholders with actual values
+            var message = messageTemplate
+                .replace(/\{name\}/g, ownerName)
+                .replace(/\{plate\}/g, plateNumber)
+                .replace(/\{phone\}/g, car.phone || '')
+                .replace(/\{carType\}/g, car.carType || '')
+                .replace(/\{model\}/g, car.model || '')
+                .replace(/\{year\}/g, car.year || '')
+                .replace(/\{engine\}/g, car.enginePower || '')
+                .replace(/\{drive\}/g, car.driveType || '');
+
             // Open WhatsApp with pre-filled message
-            const phoneNumber = car.phone.replace(/^0/, '972');
-            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
+            var phoneNumber = car.phone.replace(/^0/, '972');
+            var whatsappUrl = 'https://api.whatsapp.com/send?phone=' + phoneNumber + '&text=' + encodeURIComponent(message);
+            window.location.href = whatsappUrl;
+        }
+
+        // Build Spare Parts WhatsApp message from custom template
+        function buildSparePartsMessage(supplier, car, partName, partDetails) {
+            var template = customWhatsAppMessages.spareParts;
+            var message = template
+                .replace(/\{supplier\}/g, supplier.name || '')
+                .replace(/\{carType\}/g, car.carType || '')
+                .replace(/\{model\}/g, car.model || '')
+                .replace(/\{year\}/g, car.year || '')
+                .replace(/\{engine\}/g, car.enginePower || '')
+                .replace(/\{drive\}/g, car.driveType || '')
+                .replace(/\{part\}/g, partName || '')
+                .replace(/\{details\}/g, partDetails || '');
+            return message;
         }
 
         // Show Notification

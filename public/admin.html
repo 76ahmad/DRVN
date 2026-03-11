@@ -617,6 +617,9 @@
                         <button onclick="switchTab('paypal')" id="paypalTab" class="tab-button">
                             💳 PayPal
                         </button>
+                        <button onclick="switchTab('demo')" id="demoTab" class="tab-button">
+                            🎭 נתוני הדגמה
+                        </button>
                     </nav>
                 </div>
 
@@ -855,6 +858,76 @@
                                 <li>• הכנסה שנתית = מנויים פעילים × 200 × 12</li>
                             </ul>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Demo Data Tab -->
+                <div id="demoContent" class="p-6 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800 mb-1">🎭 נתוני הדגמה</h2>
+                            <p class="text-gray-500 text-sm">הוסף נתונים והמיים לחשבון משתמש לצורך הדגמה למוסכים</p>
+                        </div>
+                    </div>
+
+                    <!-- User Selection -->
+                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-6 mb-6">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">👤 בחר משתמש</h3>
+                        <div class="flex gap-4 items-end flex-wrap">
+                            <div class="flex-1 min-w-[250px]">
+                                <label class="block text-sm font-bold text-gray-700 mb-2">חשבון המשתמש</label>
+                                <select id="demoUserSelect" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-amber-500 focus:ring-4 focus:ring-amber-100 focus:outline-none transition-all">
+                                    <option value="">בחר משתמש...</option>
+                                </select>
+                            </div>
+                            <button onclick="loadDemoUserSelect()" class="btn-primary" style="padding: 12px 20px; font-size: 13px;">
+                                🔄 רענן רשימה
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Demo Options -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <!-- Cars Count -->
+                        <div class="bg-white border-2 border-gray-100 rounded-xl p-6 shadow-sm">
+                            <h3 class="text-lg font-bold text-gray-800 mb-3">🚗 מספר רכבים</h3>
+                            <input type="number" id="demoCarsCount" value="6" min="1" max="20" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-amber-500 focus:ring-4 focus:ring-amber-100 focus:outline-none transition-all text-center text-2xl font-bold">
+                            <p class="text-gray-400 text-xs mt-2 text-center">1-20 רכבים</p>
+                        </div>
+
+                        <!-- Appointments Count -->
+                        <div class="bg-white border-2 border-gray-100 rounded-xl p-6 shadow-sm">
+                            <h3 class="text-lg font-bold text-gray-800 mb-3">📅 מספר תורים</h3>
+                            <input type="number" id="demoAppointmentsCount" value="4" min="0" max="10" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-amber-500 focus:ring-4 focus:ring-amber-100 focus:outline-none transition-all text-center text-2xl font-bold">
+                            <p class="text-gray-400 text-xs mt-2 text-center">0-10 תורים</p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-4 flex-wrap">
+                        <button onclick="addDemoData()" class="btn-primary flex-1" style="padding: 16px; font-size: 16px;">
+                            🎭 הוסף נתוני הדגמה
+                        </button>
+                        <button onclick="clearDemoData()" class="btn-action btn-delete flex-1" style="padding: 16px; font-size: 16px;">
+                            🗑️ מחק נתוני הדגמה
+                        </button>
+                    </div>
+
+                    <!-- Status -->
+                    <div id="demoStatus" class="hidden mt-6 bg-green-50 border-2 border-green-200 rounded-xl p-4">
+                        <p id="demoStatusText" class="text-green-800 font-medium text-center"></p>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="mt-6 bg-amber-50 border-2 border-amber-200 rounded-xl p-5">
+                        <p class="font-bold text-amber-900 mb-2">💡 מידע</p>
+                        <ul class="text-amber-700 text-sm space-y-1">
+                            <li>• הנתונים נוספים לחשבון המשתמש הנבחר</li>
+                            <li>• כולל רכבים עם סטטוסים שונים (ממתין, בטיפול, מוכן, הושלם)</li>
+                            <li>• כולל טיפולים והערות לכל רכב</li>
+                            <li>• כולל תורים עתידיים</li>
+                            <li>• ניתן למחוק את כל הנתונים בלחיצה אחת</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -1620,11 +1693,13 @@
             document.getElementById('usersTab').className = 'tab-button';
             document.getElementById('statsTab').className = 'tab-button';
             document.getElementById('paypalTab').className = 'tab-button';
+            document.getElementById('demoTab').className = 'tab-button';
 
             document.getElementById('paymentsContent').classList.add('hidden');
             document.getElementById('usersContent').classList.add('hidden');
             document.getElementById('statsContent').classList.add('hidden');
             document.getElementById('paypalContent').classList.add('hidden');
+            document.getElementById('demoContent').classList.add('hidden');
 
             // إظهار الـ tab المختار
             if (tab === 'payments') {
@@ -1641,6 +1716,10 @@
                 document.getElementById('paypalTab').className = 'tab-button active';
                 document.getElementById('paypalContent').classList.remove('hidden');
                 loadPayPalPayments();
+            } else if (tab === 'demo') {
+                document.getElementById('demoTab').className = 'tab-button active';
+                document.getElementById('demoContent').classList.remove('hidden');
+                loadDemoUserSelect();
             }
         }
 
@@ -1774,6 +1853,230 @@
                 showNotification('info', 'הודעה', message.substring(0, 100));
             }
         };
+
+        // ==================== Demo Data ====================
+        const demoCarNames = [
+            { owner: 'יוסי כהן', plate: '12-345-67', carType: 'טויוטה', model: 'קורולה', year: '2022', engine: '1.8L', drive: 'קדמי', phone: '0501234567' },
+            { owner: 'משה לוי', plate: '23-456-78', carType: 'יונדאי', model: 'טוסון', year: '2023', engine: '2.0L', drive: 'כל הגלגלים', phone: '0529876543' },
+            { owner: 'דוד אברהם', plate: '34-567-89', carType: 'מאזדה', model: 'CX-5', year: '2021', engine: '2.5L', drive: 'קדמי', phone: '0541112233' },
+            { owner: 'שרה ישראלי', plate: '45-678-90', carType: 'קיא', model: 'ספורטאז\'', year: '2024', engine: '1.6T', drive: 'כל הגלגלים', phone: '0507778899' },
+            { owner: 'אבי מזרחי', plate: '56-789-01', carType: 'BMW', model: '320i', year: '2023', engine: '2.0T', drive: 'אחורי', phone: '0521234567' },
+            { owner: 'רחל גולד', plate: '67-890-12', carType: 'מרצדס', model: 'C200', year: '2022', engine: '1.5T', drive: 'אחורי', phone: '0549998877' },
+            { owner: 'חיים ברק', plate: '78-901-23', carType: 'סקודה', model: 'אוקטביה', year: '2021', engine: '1.4T', drive: 'קדמי', phone: '0501122334' },
+            { owner: 'נועה שמש', plate: '89-012-34', carType: 'פולקסוואגן', model: 'גולף', year: '2023', engine: '1.5T', drive: 'קדמי', phone: '0535566778' },
+            { owner: 'עמית רוזן', plate: '90-123-45', carType: 'סובארו', model: 'פורסטר', year: '2024', engine: '2.5L', drive: 'כל הגלגלים', phone: '0509988776' },
+            { owner: 'מיכל דיין', plate: '01-234-56', carType: 'ניסאן', model: 'קשקאי', year: '2022', engine: '1.3T', drive: 'קדמי', phone: '0521357924' },
+            { owner: 'אלון פרץ', plate: '11-222-33', carType: 'אאודי', model: 'A4', year: '2023', engine: '2.0T', drive: 'כל הגלגלים', phone: '0547771234' },
+            { owner: 'תמר שלום', plate: '22-333-44', carType: 'הונדה', model: 'סיוויק', year: '2024', engine: '1.5T', drive: 'קדמי', phone: '0501239876' },
+            { owner: 'רון גבע', plate: '33-444-55', carType: 'שברולט', model: 'אקווינוקס', year: '2023', engine: '1.5T', drive: 'כל הגלגלים', phone: '0536667788' },
+            { owner: 'לירון מלכה', plate: '44-555-66', carType: 'פיג\'ו', model: '3008', year: '2022', engine: '1.6T', drive: 'קדמי', phone: '0528889900' },
+            { owner: 'עידו נחום', plate: '55-666-77', carType: 'רנו', model: 'קליאו', year: '2021', engine: '1.0T', drive: 'קדמי', phone: '0501472583' },
+            { owner: 'הדר כץ', plate: '66-777-88', carType: 'סיטרואן', model: 'C4', year: '2023', engine: '1.2T', drive: 'קדמי', phone: '0543692581' },
+            { owner: 'גיל אוחיון', plate: '77-888-99', carType: 'מיצובישי', model: 'אאוטלנדר', year: '2024', engine: '2.4L', drive: 'כל הגלגלים', phone: '0527894561' },
+            { owner: 'ענבר חן', plate: '88-999-00', carType: 'לקסוס', model: 'NX', year: '2023', engine: '2.5H', drive: 'כל הגלגלים', phone: '0509517538' },
+            { owner: 'אור שפירא', plate: '99-000-11', carType: 'וולוו', model: 'XC40', year: '2022', engine: '2.0T', drive: 'כל הגלגלים', phone: '0531597534' },
+            { owner: 'יעל סגל', plate: '10-111-22', carType: 'סאנגיונג', model: 'טיבולי', year: '2021', engine: '1.5T', drive: 'קדמי', phone: '0548523691' }
+        ];
+
+        const demoStatuses = ['waiting', 'in_progress', 'ready', 'completed'];
+
+        const demoMaintenances = [
+            { type: 'שמן ומסנן', cost: 350, notes: 'הוחלף שמן סינטטי 5W-30 + מסנן שמן' },
+            { type: 'בלמים קדמיים', cost: 850, notes: 'הוחלפו רפידות ודיסקים קדמיים' },
+            { type: 'בלמים אחוריים', cost: 650, notes: 'הוחלפו רפידות אחוריות' },
+            { type: 'צמיגים', cost: 1800, notes: '4 צמיגים חדשים 205/55R16 + איזון' },
+            { type: 'מצבר', cost: 450, notes: 'הוחלף מצבר 60Ah' },
+            { type: 'מיזוג אוויר', cost: 600, notes: 'מילוי גז + בדיקת דליפות' },
+            { type: 'רצועת תזמון', cost: 1200, notes: 'החלפת רצועה + גלגלות + משאבת מים' },
+            { type: 'טיפול 30,000', cost: 550, notes: 'שמן, מסננים, בדיקת בלמים, צמיגים' },
+            { type: 'טיפול 60,000', cost: 950, notes: 'טיפול מורחב: נוזלים, מסננים, בלמים, מתלים' },
+            { type: 'בדיקה שנתית (טסט)', cost: 200, notes: 'הכנה לטסט + תיקונים נדרשים' },
+            { type: 'החלפת פנסים', cost: 300, notes: 'הוחלפו נורות LED קדמיות' },
+            { type: 'בעיית חשמל', cost: 400, notes: 'תיקון תקלה במערכת החשמל' }
+        ];
+
+        function loadDemoUserSelect() {
+            const select = document.getElementById('demoUserSelect');
+            if (!select || !allUsers || allUsers.length === 0) return;
+
+            select.innerHTML = '<option value="">בחר משתמש...</option>';
+            allUsers.forEach(function(user) {
+                const option = document.createElement('option');
+                // userId field is the Firebase Auth UID, id is the Firestore doc ID
+                option.value = user.userId || user.id;
+                option.textContent = user.email + (user.subscriptionStatus ? ' (' + user.subscriptionStatus + ')' : '');
+                select.appendChild(option);
+            });
+        }
+
+        async function addDemoData() {
+            const userId = document.getElementById('demoUserSelect').value;
+            if (!userId) {
+                showNotification('warning', 'שגיאה', 'יש לבחור משתמש קודם');
+                return;
+            }
+
+            const carsCount = parseInt(document.getElementById('demoCarsCount').value) || 6;
+            const appointmentsCount = parseInt(document.getElementById('demoAppointmentsCount').value) || 4;
+
+            if (!confirm('האם להוסיף ' + carsCount + ' רכבים ו-' + appointmentsCount + ' תורים לחשבון הנבחר?')) return;
+
+            const statusEl = document.getElementById('demoStatus');
+            const statusText = document.getElementById('demoStatusText');
+            statusEl.classList.remove('hidden');
+            statusText.textContent = '⏳ מוסיף נתוני הדגמה...';
+
+            try {
+                const batch = db.batch();
+                const selectedCars = demoCarNames.slice(0, Math.min(carsCount, demoCarNames.length));
+                const demoIds = [];
+
+                // Add cars
+                for (var i = 0; i < selectedCars.length; i++) {
+                    var car = selectedCars[i];
+                    var status = demoStatuses[i % demoStatuses.length];
+                    var carRef = db.collection('cars').doc();
+                    demoIds.push(carRef.id);
+
+                    batch.set(carRef, {
+                        plateNumber: car.plate,
+                        ownerName: car.owner,
+                        phone: car.phone,
+                        carType: car.carType,
+                        model: car.model,
+                        year: car.year,
+                        enginePower: car.engine,
+                        driveType: car.drive,
+                        carStatus: status,
+                        userId: userId,
+                        isDemo: true,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+
+                await batch.commit();
+
+                // Add maintenances (1-3 per car) - top-level maintenance collection
+                const mainBatch = db.batch();
+                for (var j = 0; j < demoIds.length; j++) {
+                    var numMaint = 1 + Math.floor(Math.random() * 3);
+                    for (var k = 0; k < numMaint; k++) {
+                        var maint = demoMaintenances[Math.floor(Math.random() * demoMaintenances.length)];
+                        var daysAgo = Math.floor(Math.random() * 90);
+                        var maintDate = new Date();
+                        maintDate.setDate(maintDate.getDate() - daysAgo);
+
+                        var maintRef = db.collection('maintenance').doc();
+                        mainBatch.set(maintRef, {
+                            carId: demoIds[j],
+                            userId: userId,
+                            date: maintDate.toISOString().split('T')[0],
+                            partName: maint.type,
+                            workDescription: maint.notes,
+                            totalCost: maint.cost,
+                            kilometers: String(30000 + Math.floor(Math.random() * 70000)),
+                            images: [],
+                            isDemo: true,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                }
+                await mainBatch.commit();
+
+                // Add appointments
+                if (appointmentsCount > 0) {
+                    const appBatch = db.batch();
+                    for (var a = 0; a < appointmentsCount; a++) {
+                        var daysAhead = 1 + Math.floor(Math.random() * 14);
+                        var appDate = new Date();
+                        appDate.setDate(appDate.getDate() + daysAhead);
+                        var hours = 8 + Math.floor(Math.random() * 10);
+                        var carForApp = selectedCars[a % selectedCars.length];
+
+                        var appRef = db.collection('appointments').doc();
+                        appBatch.set(appRef, {
+                            userId: userId,
+                            title: carForApp.owner + ' - ' + carForApp.plate,
+                            date: appDate.toISOString().split('T')[0],
+                            time: (hours < 10 ? '0' : '') + hours + ':00',
+                            reminder: true,
+                            isDemo: true,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                    await appBatch.commit();
+                }
+
+                statusText.textContent = '✅ נוספו ' + selectedCars.length + ' רכבים, טיפולים ו-' + appointmentsCount + ' תורים בהצלחה!';
+                statusEl.className = statusEl.className.replace('bg-green-50 border-green-200', 'bg-green-50 border-green-200');
+                showNotification('success', 'הצלחה!', 'נתוני ההדגמה נוספו בהצלחה');
+            } catch (error) {
+                console.error('Demo data error:', error);
+                statusText.textContent = '❌ שגיאה: ' + error.message;
+                statusEl.className = statusEl.className.replace('bg-green-50 border-green-200', 'bg-red-50 border-red-200');
+                showNotification('error', 'שגיאה', 'לא ניתן להוסיף נתוני הדגמה');
+            }
+        }
+
+        async function clearDemoData() {
+            const userId = document.getElementById('demoUserSelect').value;
+            if (!userId) {
+                showNotification('warning', 'שגיאה', 'יש לבחור משתמש קודם');
+                return;
+            }
+
+            if (!confirm('האם למחוק את כל נתוני ההדגמה מהחשבון הנבחר?')) return;
+
+            const statusEl = document.getElementById('demoStatus');
+            const statusText = document.getElementById('demoStatusText');
+            statusEl.classList.remove('hidden');
+            statusText.textContent = '⏳ מוחק נתוני הדגמה...';
+
+            try {
+                // Delete demo maintenances first
+                const maintsSnapshot = await db.collection('maintenance')
+                    .where('userId', '==', userId)
+                    .where('isDemo', '==', true)
+                    .get();
+
+                var deletedMaints = 0;
+                for (var m = 0; m < maintsSnapshot.docs.length; m++) {
+                    await maintsSnapshot.docs[m].ref.delete();
+                    deletedMaints++;
+                }
+
+                // Delete demo cars
+                const carsSnapshot = await db.collection('cars')
+                    .where('userId', '==', userId)
+                    .where('isDemo', '==', true)
+                    .get();
+
+                var deletedCars = 0;
+                for (var i = 0; i < carsSnapshot.docs.length; i++) {
+                    await carsSnapshot.docs[i].ref.delete();
+                    deletedCars++;
+                }
+
+                // Delete demo appointments
+                const appsSnapshot = await db.collection('appointments')
+                    .where('userId', '==', userId)
+                    .where('isDemo', '==', true)
+                    .get();
+
+                var deletedApps = 0;
+                for (var k = 0; k < appsSnapshot.docs.length; k++) {
+                    await appsSnapshot.docs[k].ref.delete();
+                    deletedApps++;
+                }
+
+                statusText.textContent = '✅ נמחקו ' + deletedCars + ' רכבים ו-' + deletedApps + ' תורים';
+                showNotification('success', 'הצלחה!', 'נתוני ההדגמה נמחקו בהצלחה');
+            } catch (error) {
+                console.error('Clear demo error:', error);
+                statusText.textContent = '❌ שגיאה: ' + error.message;
+                showNotification('error', 'שגיאה', 'לא ניתן למחוק נתוני הדגמה');
+            }
+        }
 
         // Handle Enter key in login form
         document.addEventListener('DOMContentLoaded', () => {

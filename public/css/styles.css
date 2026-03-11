@@ -2296,6 +2296,20 @@ details summary span:last-child {
    CAR WHEEL LOADER
    ========================================== */
 
+/* Drive Type Toggle */
+.drive-type-btn {
+    background: white !important;
+    color: #6b7280 !important;
+    border: 2px solid #e5e7eb !important;
+}
+
+.drive-type-btn.active {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    color: white !important;
+    border-color: #d97706 !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
 .wheel-spinner {
     animation: wheelSpin 1.2s linear infinite;
     filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
@@ -2304,4 +2318,58 @@ details summary span:last-child {
 @keyframes wheelSpin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+}
+
+/* Skeleton Loader */
+@keyframes skeleton-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.skeleton-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.skeleton-pulse {
+    background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--border-color) 50%, var(--bg-tertiary) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+    border-radius: 6px;
+}
+
+.skeleton-image {
+    aspect-ratio: 16/9;
+    width: 100%;
+}
+
+.skeleton-line {
+    height: 14px;
+    margin-bottom: 10px;
+}
+
+.skeleton-line-lg {
+    height: 20px;
+    margin-bottom: 12px;
+}
+
+.skeleton-badge {
+    height: 28px;
+    width: 100px;
+    border-radius: 8px;
+}
+
+.skeleton-btn {
+    height: 36px;
+    border-radius: 10px;
+}
+
+.skeleton-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    flex-shrink: 0;
 }

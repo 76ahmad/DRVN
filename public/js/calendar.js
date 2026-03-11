@@ -286,10 +286,10 @@
                     sendAppointmentReminder(appointmentData);
                 }
 
-                alert('הפגישה נשמרה בהצלחה!');
+                alert('הטיפול נשמר בהצלחה!');
             } catch (error) {
                 console.error('Error saving appointment:', error);
-                alert('שגיאה בשמירת הפגישה: ' + error.message);
+                alert('שגיאה בשמירת הטיפול:' + error.message);
             }
         });
 
@@ -303,9 +303,9 @@
 
             const phone = appointment.phone.replace(/^0/, '972');
             const date = new Date(appointment.date).toLocaleDateString('he-IL');
-            const message = `שלום ${appointment.ownerName},\n\nמזכירים לך על פגישה במוסך:\n📅 תאריך: ${date}\n⏰ שעה: ${appointment.time}\n🚗 רכב: ${appointment.plateNumber}\n📋 סוג: ${appointment.type}\n\nנתראה!`;
-            const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
+            const message = `שלום ${appointment.ownerName},\n\nמזכירים לך על טיפול במוסך:\n📅 תאריך: ${date}\n⏰ שעה: ${appointment.time}\n🚗 רכב: ${appointment.plateNumber}\n📋 סוג: ${appointment.type}\n\nנתראה!`;
+            const whatsappUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+            window.location.href = whatsappUrl;
         }
 
         // Previous Month
@@ -454,16 +454,16 @@
 
         // Delete Appointment
         async function deleteAppointment(appointmentId) {
-            if (!confirm('האם אתה בטוח שברצונך למחוק פגישה זו?')) return;
+            if (!confirm('האם אתה בטוח שברצונך למחוק טיפול זה?')) return;
 
             try {
                 await db.collection('appointments').doc(appointmentId).delete();
                 await loadAppointments();
                 renderCalendar();
-                alert('הפגישה נמחקה בהצלחה');
+                alert('הטיפול נמחק בהצלחה');
             } catch (error) {
                 console.error('Error deleting appointment:', error);
-                alert('שגיאה במחיקת הפגישה');
+                alert('שגיאה במחיקת הטיפול');
             }
         }
 

@@ -83,7 +83,7 @@ service cloud.firestore {
       allow read: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
 
       allow create: if isSignedIn() &&
-        request.resource.data.userId == request.auth.uid &&
+        (isAdmin() || request.resource.data.userId == request.auth.uid) &&
         request.resource.data.keys().hasAll(['userId', 'plateNumber']);
 
       allow update: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid) &&
@@ -104,7 +104,7 @@ service cloud.firestore {
       );
 
       allow create: if isSignedIn() &&
-        request.resource.data.userId == request.auth.uid &&
+        (isAdmin() || request.resource.data.userId == request.auth.uid) &&
         request.resource.data.keys().hasAll(['userId', 'carId', 'date']) &&
         isValidString(request.resource.data.get('workDescription', ''), 2000);
 
@@ -121,7 +121,7 @@ service cloud.firestore {
       allow read: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
 
       allow create: if isSignedIn() &&
-        request.resource.data.userId == request.auth.uid &&
+        (isAdmin() || request.resource.data.userId == request.auth.uid) &&
         request.resource.data.keys().hasAll(['userId', 'date']);
 
       allow update: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid) &&
